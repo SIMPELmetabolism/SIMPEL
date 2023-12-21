@@ -1,0 +1,43 @@
+Package: SIMPEL
+Type: Package
+Title: Stable Isotope assisted Metabolomics for Pathway ELucidation
+Version: 0.0.0.9
+Authors@R: c(
+    person("Jiahong", "Zhou", email = "jzhou@danforthcenter.org", role = c("cre","aut")),
+    person("Shrikaar", "Kambhampati", email = "skambhampati@salk.edu", role = "aut"),
+    person("Allen", "Hubbard", role = "aut"))
+Description: SIMPEL is an R package for streamlining data analysis of non-stationary stable isotopic pulse 
+    or pulse chase labeling experiments and can be used with both targeted and untargeted metabolomics data sets. 
+    SIMPEL is capable of calculating and identifying single and dual labeled isotopologues from XCMS feature lists 
+    for chemical formulae from the user. SIMPEL can generate Mass Isotopologue Distribution (MID) matrices and 
+    calculate average labeling for compounds. The data can serve as an important input for metabolic flux calculations 
+    in modeling software. SIMPEL includes post-processing data analysis features to generate MID plots, 
+    average labeling diagrams, perform k-means clustering analysis, Principle Component Analysis (PCA) and 
+    to visualize label enrichment as a heat map. 
+License: GPL-3
+URL: https://github.com/jzhou19/SIMPEL
+Depends: R (>= 2.10)
+Imports: 
+    purrr,
+    stringr,
+    ggfortify,
+    ggplot2,
+    gplots,
+    ggpubr,
+    gridExtra,
+    grid,
+    lattice,
+    RColorBrewer,
+    tidyverse,
+    dplyr (>= 1.0.0),
+    IsoCorrectoR,
+    data.table,
+    CHNOSZ,
+    MassTools
+Remotes: 
+    mjhelf/MassTools
+Suggests:
+    xcms
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.3

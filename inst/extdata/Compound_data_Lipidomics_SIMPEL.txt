@@ -1,0 +1,11 @@
+"prefix"	"polarity"	"rt"	"formula"	"Compound"	"poolsize"
+"N001"	"neg"	0.72	"C14H30O4S"	"Myristylsulfate"	0.436885953285272
+"N002"	"neg"	0.74	"C18H30O3S"	"4-Dodecylbenzenesulfonicacid"	0.629430692930032
+"N071"	"neg"	10.28	"C5H9NO4"	"Glutamicacid_neg"	0.483898524089717
+"N072"	"neg"	10.6	"C5H10N2O3"	"Glutamine_Neg"	0.43335863542673
+"N074"	"neg"	10.71	"C4H8N2O3"	"Asparagine__neg"	1.31436154014288
+"P001"	"pos"	0.86	"C23H36O4"	"NP-009800"	0.576614748219679
+"P002"	"pos"	0.87	"C18H28O3"	"9S-13R-12-Oxophytodienoicacid"	0.327539696571131
+"P005"	"pos"	0.88	"C24H24N2O7"	"3-{[4-(1-3-Benzodioxol-5-ylmethyl)piperazino]carbonyl}-6-7-dimethoxy-2H-chromen-2-one"	0.36712463465256
+"P006"	"pos"	0.89	"C18H32O4"	"NP-002322"	0.031620656097319
+"P007"	"pos"	0.9	"C9H7N"	"Isoquinoline/Quinoline_A"	1.25950672080688
