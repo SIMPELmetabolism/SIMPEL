@@ -30,7 +30,7 @@ get_comp_mz_lookup <- function(compound_data, comp_formula, r_time, ppm, polarit
   h = unlist(ifelse("H" %in% elementInLabel, list(get_element_count(comp_formula)[['H']]), list(NULL)))
 
   comp_prefix <- compound_data %>%
-    filter(formula == comp_formula & rt == r_time) %>%
+    dplyr::filter(formula == comp_formula & rt == r_time) %>%
     pull(prefix)
 
   # create a dataframe containing element info
