@@ -195,40 +195,10 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     }
   }
 
-  #move this up before removing only the things that we've matched
-  #calculate the median normalized data
-  forMedianNormalization = XCMS_data
 
   #create a subset table that only contains binned rows with
   #labeled data
   XCMS_data = XCMS_data[is.na(XCMS_data$comp_result) == FALSE,]
-
-
-  #we're going to exclude the column labels whose rows do not include the numeric data
-  vecToExclude = c("mz","polarity", "rt", "comp_result","Formula", "carbon", "nitrogen",
-                   "hydrogen", "total_isotopes", "Bin", "Compound" )
-
-  #this vector of the medians is going to be critical because we are going to use
-  #and reuse it
-  columnsToSearch= setdiff(colnames(forMedianNormalization), vecToExclude)
-
-  #also save the columns to add back
-  subsetOfTableJustAnnotationData = forMedianNormalization[,colnames(forMedianNormalization) %in% vecToExclude]
-
-  #get the median for each column
-  #make sure to include all the data just for the median normalizaton
-  for(column in 1:length(columnsToSearch))
-  {
-    myColumn = columnsToSearch[column]
-    myMedian = median(forMedianNormalization[,colnames(forMedianNormalization) ==  myColumn])
-
-    #divide the intensity of each entry by the median of the column
-    forMedianNormalization[,colnames(forMedianNormalization) ==  myColumn] = forMedianNormalization[,colnames(forMedianNormalization) ==  myColumn] / myMedian
-
-  }
-
-  ##now ... remove all the compounds we don't have hits for
-  forMedianNormalization = forMedianNormalization[is.na(forMedianNormalization$comp_result) == FALSE,]
 
   # #get the xcms data as input
   MIDs_table = XCMS_data
@@ -250,21 +220,29 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
 
 
   #scale the MIDs table
+  categories = unique(data_cleanII(colnames(MIDs_table)[colnames(MIDs_table) %like% "_.+_"]))
   MIDs_tableScaled = MIDs_table %>%
     group_by(Bin) %>%
-    left_join(. , compounds_data[c('prefix','poolsize')], by=join_by(Bin==prefix)) %>%
-    mutate_at(columnsToSearch, ~.*poolsize) %>%
-    dplyr::select(-poolsize) %>%
+    left_join(. , dplyr::select(compounds_data, c('prefix', contains('poolsize'))), by=join_by(Bin==prefix)) %>%
+    mutate(across(contains(paste0(categories[1], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[1]))))) %>%
+    mutate(across(contains(paste0(categories[2], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[2]))))) %>%
+    dplyr::select(-contains('poolsize')) %>%
     as.data.frame()
 
 
   #Next we calculate label enrichment which is the nmole equivalent of labeled compound at a given timepoint
   #Label enrichment is the sum of labeled isotopologues of each bin within the pool size scaled MID table
   #note that this does not include M0 [unlabeled pool is removed]
+  label_enrichment = MIDs_tableScaled %>%
+    filter(total_isotopes != 0) %>%
+    select(colnames(.)[colnames(.) %like% "_.+_"], Bin) %>%
+    group_by(Bin) %>%
+    summarise(across(everything(), sum)) %>%
+    left_join(. , MIDs_tableScaled %>%
+                dplyr::filter(total_isotopes == 0) %>%
+                dplyr::select(mz, rt, polarity, Bin, Compound, Formula),
+              by=join_by(Bin))
 
-
-  #call the label enrichment fxn
-  label_enrichment = getLabelEnrichment(MIDs_tableScaled,forMedianNormalization,columnsToSearch,subsetOfTableJustAnnotationData,compounds_data)
 
   #remove bins that have no M0s
   MIDs_table = MIDs_table[!MIDs_table$Bin %in% vecOfNoMIDs,]
@@ -310,17 +288,27 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
   vecOfNoMIDsNAcorrected = listOfAllOutputsNAcorrected[[3]]
 
 
-  #scale the MIDs table by proxy pool
+  #scale the MIDs table by pool sizes
   scaledMIDsTableNAcorrected = MIDs_tableNAcorrected %>%
     group_by(Bin) %>%
-    left_join(. , compounds_data[c('prefix','poolsize')], by=join_by(Bin==prefix)) %>%
-    mutate_at(columnsToSearch, ~.*poolsize) %>%
-    dplyr::select(-poolsize) %>%
+    left_join(. , dplyr::select(compounds_data, c('prefix',contains('poolsize'))), by=join_by(Bin==prefix)) %>%
+    mutate(across(contains(paste0(categories[1], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[1]))))) %>%
+    mutate(across(contains(paste0(categories[2], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[2]))))) %>%
+    dplyr::select(-contains('poolsize')) %>%
     as.data.frame()
 
 
   #get the enrichment adjusted MIDs
-  labelEnrichmentMIDsNAcorrected = getLabelEnrichment(scaledMIDsTableNAcorrected,forMedianNormalization,columnsToSearch,subsetOfTableJustAnnotationData,compounds_data)
+  labelEnrichmentMIDsNAcorrected = scaledMIDsTableNAcorrected %>%
+    filter(total_isotopes != 0) %>%
+    select(colnames(.)[colnames(.) %like% "_.+_"], Bin) %>%
+    group_by(Bin) %>%
+    summarise(across(everything(), sum)) %>%
+    left_join(. , scaledMIDsTableNAcorrected %>%
+                dplyr::filter(total_isotopes == 0) %>%
+                dplyr::select(mz, rt, polarity, Bin, Compound, Formula),
+              by=join_by(Bin))
+
 
   # put all compounds that only had unlabeled isotopologues back to the tables
   if(length(which_unlabeled) > 0){ # if there are such compounds
