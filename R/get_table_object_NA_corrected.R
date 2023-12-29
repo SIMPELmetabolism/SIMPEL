@@ -234,7 +234,7 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
   #Label enrichment is the sum of labeled isotopologues of each bin within the pool size scaled MID table
   #note that this does not include M0 [unlabeled pool is removed]
   label_enrichment = MIDs_tableScaled %>%
-    filter(total_isotopes != 0) %>%
+    dplyr::filter(total_isotopes != 0) %>%
     select(colnames(.)[colnames(.) %like% "_.+_"], Bin) %>%
     group_by(Bin) %>%
     summarise(across(everything(), sum)) %>%
