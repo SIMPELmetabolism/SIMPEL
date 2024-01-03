@@ -52,14 +52,14 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
 
   #how many iterations for the kmeans - 25 should be more than enough for convergence
   howmanyN = 25
-  mydata1 = mydata1
-  mydata2 = mydata2
+  mydata1 = as.data.frame(mydata1)
+  mydata2 = as.data.frame(mydata2)
   labels = labels
   outputName = outputName
 
   #labels = "Bin"
-  rownames(mydata1) = mydata1[,colnames(mydata1) %in% c(labels)]
-  rownames(mydata2) = make.unique( mydata2[,colnames(mydata2) %in% c(labels)])
+  rownames(mydata1) = pull(mydata1, labels)
+  rownames(mydata2) = make.unique(pull(mydata2, labels))
 
   #get the category name, pare down these variables, note well
   Category = Category
