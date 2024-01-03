@@ -30,15 +30,13 @@ PCA_and_heatmap <- function(mydata1, PCMax=3, heatMapCategories, labels="Bin", o
   PCMax = PCMax
   allTotFigures = list()
   heatMapCategories = heatMapCategories
-  mydata1 = mydata1
+  mydata1 = as.data.frame(mydata1)
   outputName = outputName
 
-  #subset the table by just the columns matching our category of interest
-  #catSubset = mydata1[,colnames(mydata1) %like% Category]
 
-
+  
   #remove bin column from table to do PCA on
-  rownames(mydata1) =  mydata1[,colnames(mydata1) %in% labels]
+  rownames(mydata1) =  pull(mydata1, labels)
   mydata1Backup = mydata1
   mydata1[labels] = NULL
 
