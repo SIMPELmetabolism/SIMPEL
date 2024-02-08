@@ -420,6 +420,8 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
                            compound=allTotClusters[[1]][["data"]][["rownames"]]) %>%
     arrange(cluster)
 
+  write.csv(clusterInfo, paste0(Category, "_", nClust, "clust.csv"), row.names = F)
+
   allTotClusters = append(allTotClusters, list(clusterInfo))
 
   return(allTotClusters)
