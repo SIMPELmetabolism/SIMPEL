@@ -101,7 +101,7 @@ label_enrichment_plot <- function(mydata, Category, yLim=NULL,xLim=NULL, axisTit
     #get the set of times from the column names
     myTimes = data_clean(as.character(colnames(mydata)))
     #pull out any non-numeric elements of the timepoints
-    myTimes =  as.numeric(gsub("X","",as.character(myTimes)))
+    myTimes =  suppressWarnings(as.numeric(gsub("X","",as.character(myTimes))))
     #remove any non-valid timepoints
     myTimes = myTimes[is.na(myTimes) == FALSE]
     #get a unique vector of the timepoints
@@ -139,7 +139,8 @@ label_enrichment_plot <- function(mydata, Category, yLim=NULL,xLim=NULL, axisTit
       myTimeMean = mean(as.numeric(theVecOfInfo[,as.numeric(colnames(theVecOfInfo)) %in% c(myTime)]))
 
       #calculate the SD for this timepoint
-      myTimeSD = sd(as.numeric(theVecOfInfo[,as.numeric(colnames(theVecOfInfo)) %in% c(myTime)]))
+      myTimeSD = sd(as.numeric(theVecOfInfo[,as.numeric(colnames(theVecOfInfo)) %in% c(myTime)])) /
+        sqrt(length(as.numeric(theVecOfInfo[,as.numeric(colnames(theVecOfInfo)) %in% c(myTime)])))
 
       allMyInfoAvg = c(allMyInfoAvg, myTimeMean)
       allMyInfoSD = c(allMyInfoSD, myTimeSD)
@@ -166,7 +167,7 @@ label_enrichment_plot <- function(mydata, Category, yLim=NULL,xLim=NULL, axisTit
     #set the y-limit to at least the value of the highest error bar
     if(yLim == "default")
     {
-      yLim = max(allMyInfoAvg[!is.na(allMyInfoAvg)]) + allMyInfoAvg+allMyInfoSD
+      yLim = max(allMyInfoAvg[!is.na(allMyInfoAvg)]) + allMyInfoAvg + allMyInfoSD
 
     }
 
