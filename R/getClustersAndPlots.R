@@ -99,7 +99,7 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
   }
 
   #go ahead and do the kmeans right away on the normalized table
-  kmeans_object = kmeans(catSubset,nClust,nstart = howmanyN)
+  kmeans_object = kmeans(catSubset, nClust, nstart = howmanyN, iter.max = 100)
 
   #bring the kmeans and the PCA in here
   #have one object to store all of the plots
@@ -158,14 +158,14 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
     {
       whichTimepoint = vecOfExpTimes[timepoint]
       #this is going to be the avg's and standard deviation for all of the compounds associated with a cluster
-      myMeanToAdd = mean(rowMeans(for_plottingFurther[,colnames(for_plottingFurther) %like% whichTimepoint]))
-      mySdToAdd = sd(rowMeans(for_plottingFurther[,colnames(for_plottingFurther) %like% whichTimepoint]))
+      myMeanToAdd = mean(rowMeans(for_plottingFurther[,sapply(strsplit(colnames(for_plottingFurther) , '[_]' ), `[` , 1) == whichTimepoint]))
+      mySdToAdd = sd(rowMeans(for_plottingFurther[,sapply(strsplit(colnames(for_plottingFurther) , '[_]' ), `[` , 1) == whichTimepoint]))
       dfAllClusters = rbind(dfAllClusters, data.frame(Time=whichTimepoint, mean=myMeanToAdd, sd=mySdToAdd,Cluster=theClusterAvgNum))
     }
 
 
     #if we want to do the MIDs as well
-    if( doMIDs == TRUE)
+    if(doMIDs == TRUE)
     {
       #we have to match up the label enrichment and the MIDs
       #only pull out those MIDs  of compounds within the cluster
@@ -190,7 +190,7 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
 
       #now, do kmeans on the many MIDs associated
       #with the Avg concentrations that cluster together
-      kmeans_MIDs_objects = kmeans(for_plottingMIDs, numberOfClusters,nstart = howmanyN)
+      kmeans_MIDs_objects = kmeans(for_plottingMIDs, numberOfClusters, nstart = howmanyN, iter.max = 100)
 
       #as we iterate through clusters, this list will store our plots
       allAverageAndMIDSCluster = list()
@@ -236,8 +236,8 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
         for(timepoint in 1:length(vecOfExpTimes))
         {
           whichTimepoint = vecOfExpTimes[timepoint]
-          myMeanToAdd =  mean(rowMeans(for_plottingSub[,colnames(for_plottingSub) %like% whichTimepoint]))
-          mySdToAdd =  sd(as.vector(as.matrix(for_plottingSub[,colnames(for_plottingSub) %like% whichTimepoint])))
+          myMeanToAdd =  mean(rowMeans(for_plottingSub[,sapply(strsplit(colnames(for_plottingSub) , '[_]' ), `[` , 1) == whichTimepoint]))
+          mySdToAdd =  sd(as.vector(as.matrix(for_plottingSub[,sapply(strsplit(colnames(for_plottingSub) , '[_]' ), `[` , 1) == whichTimepoint])))
 
           #get all the MIDs associated with that
           dfAllClustersMIDs = rbind(dfAllClustersMIDs, data.frame(Time=whichTimepoint, mean=myMeanToAdd, sd=mySdToAdd,Cluster=theCluster))
@@ -418,6 +418,7 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
 
   clusterInfo = data.frame(cluster=allTotClusters[[1]][["data"]][["cluster"]],
                            compound=allTotClusters[[1]][["data"]][["rownames"]]) %>%
+    merge(., mydata1[,c("mz","rt")], by.x="compound", by.y=0) %>%
     arrange(cluster)
 
   write.csv(clusterInfo, paste0(Category, "_", nClust, "clust.csv"), row.names = F)
