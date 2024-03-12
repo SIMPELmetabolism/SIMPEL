@@ -403,7 +403,8 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
   ##add the overall kmeans plot of the averages
   #allTotClusters = prepend(allTotClusters,allClusterForBeginning)
   listToAdd = list()
-  listToAdd[[1]] = autoplot(kmeans_object, data = catSubset, label = TRUE, label.size = 3, frame = TRUE, frame.type = 'norm', main = forAllAvgsCluster)
+  listToAdd[[1]] = autoplot(kmeans_object, data = catSubset, label = TRUE, label.size = 3, label.hjust = 0.5, label.vjust = 1,
+                            frame = TRUE, frame.type = 'norm', main = forAllAvgsCluster)
   listToAdd2 = list()
   listToAdd2[[1]] = ggplot(dfAllClusters, aes(x=Time,y=mean,colour=Cluster,group=Cluster)) + geom_line() + ggtitle(forAllAvgsCluster) + geom_ribbon(aes(ymax=mean + sd, ymin=mean - sd, linetype=NA, fill = factor(Cluster)), show.legend = F, alpha=.1)
 
