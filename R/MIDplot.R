@@ -106,7 +106,7 @@ MIDplot <- function(myData, Category, splitIsotopologue = "default", axisTitle="
 
       # calculate each time point mean and each std dev
       myTimes <- data_clean(as.character(colnames(myData)))
-      myTimes <- as.numeric(gsub("X","",as.character(myTimes)))
+      myTimes <- suppressWarnings(as.numeric(gsub("X","",as.character(myTimes))))
       myTimes <- myTimes[is.na(myTimes) == FALSE]
       myTimesUnique <- unique(myTimes)
 
@@ -136,7 +136,8 @@ MIDplot <- function(myData, Category, splitIsotopologue = "default", axisTitle="
         names(myVecOfAllInfo) <- as.numeric(myTimepointMatch)
 
         myTimeMean <- mean(as.numeric(myVecOfAllInfo[,as.numeric(colnames(myVecOfAllInfo)) %in% c(myTime)]))
-        myTimeSD <- sd(as.numeric(myVecOfAllInfo[,as.numeric(colnames(myVecOfAllInfo)) %in% c(myTime)]))
+        myTimeSD <- sd(as.numeric(myVecOfAllInfo[,as.numeric(colnames(myVecOfAllInfo)) %in% c(myTime)])) /
+          sqrt(length(as.numeric(myVecOfAllInfo[,as.numeric(colnames(myVecOfAllInfo)) %in% c(myTime)])))
         df <- rbind(df, data.frame(Isotopologue=isotopologueName, Time=myTime, Mean=myTimeMean, stdDev=myTimeSD))
       }
     }
