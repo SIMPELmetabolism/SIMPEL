@@ -99,7 +99,7 @@ PCA_and_heatmap <- function(mydata1, PCMax=3, heatMapCategories, labels="Bin", o
 
 
   heatMapList = list()
-  toPrintFile = paste(paste0(heatMapCategories), outputName, "heatmap_and_PCA.pdf")
+  toPrintFile = paste(paste0(heatMapCategories, collapse = ""), outputName, "heatmap_and_PCA.pdf")
   for(i in 1:length(heatMapCategories))
   {
     catSubset = mydata1[,colnames(mydata1) %like% heatMapCategories[i]]
