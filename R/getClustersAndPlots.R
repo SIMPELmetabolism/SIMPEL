@@ -71,23 +71,11 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
   #subset the table by just the columns matching our category of interest
   catSubset = mydata1[,colnames(mydata1) %like% Category]
 
-  #scale the data from 0 to 1 for each row of the table.
-  #This will enable comparison between different clusters
-  for(row in 1:nrow(catSubset))
-  {
-    #get the max
-    myMax = max(catSubset[row,])
-
-    #process each entry
-    for(column in 1:ncol(catSubset))
-    {
-      #scale every entry by this max
-      toUpdate = catSubset[row,column] / myMax
-      #replace with the scaled value
-      catSubset[row,column] = toUpdate
-    }
-  }
-
+  # move everything down parallelly so that initial labeling wouldn't be a large number to cause confusion
+  initial_time <- min(as.numeric(gsub("X", "", data_clean(names(catSubset)))))
+  min_initial_time <- do.call(pmin, catSubset[, c(names(catSubset) %like% paste0("X",initial_time,"_"))]) # min of the initial time for each compound
+  catSubset <- catSubset - min_initial_time
+  
   #there'll be some na's so set them to zero
   catSubset[is.na(catSubset)] = 0
 
@@ -252,8 +240,8 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
           {
             whichTimepoint = vecOfExpTimes[timepoint]
 
-            myMeanToAdd =  mean(as.numeric(for_plottingSub[rownames(for_plottingSub) == theCompound,colnames(for_plottingSub) %like% whichTimepoint]))
-            mySdToAdd =  sd(as.numeric(for_plottingSub[rownames(for_plottingSub) == theCompound,colnames(for_plottingSub) %like% whichTimepoint]))
+            myMeanToAdd =  mean(as.numeric(for_plottingSub[rownames(for_plottingSub) == theCompound,sapply(strsplit(colnames(for_plottingSub) , '[_]' ), `[` , 1) == whichTimepoint]))
+            mySdToAdd =  sd(as.numeric(for_plottingSub[rownames(for_plottingSub) == theCompound,sapply(strsplit(colnames(for_plottingSub) , '[_]' ), `[` , 1) == whichTimepoint]))
             #we're looking at all of the MIDs in a single cluster
             dfMIDs = rbind(dfMIDs, data.frame(Time=whichTimepoint, mean=myMeanToAdd, sd=mySdToAdd, Compound=theCompound, cluster = j))
           }
