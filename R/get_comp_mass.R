@@ -35,12 +35,10 @@ get_comp_mass <- function(comp_formula, polarity = NULL){
 
   if(is.null(polarity)){
     mass = 0
-  }
-  if(polarity == "pos")
+  }else if(polarity == "pos")
   {
     mass = 1.007276
-  }
-  if(polarity == "neg")
+  }else if(polarity == "neg")
   {
     mass = - 1.007276
   }
