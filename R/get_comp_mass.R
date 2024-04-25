@@ -1,15 +1,15 @@
 #' @title Calculate m/z for given formulas
 #'
-#' @description This function is calculating the m/z for the chemical formulas provided
+#' @description This function is calculating the m/z for a chemical formula provided
 #'
-#' @param comp_formula is the formula from the annotation file
-#' @param polarity will be the polarity from both Compound_Data and XCMS_data
+#' @param comp_formula Formula of the compound
+#' @param polarity Polarity of the compound, can be "pos" or "neg" or \code{NULL}. Default to \code{NULL} for a neutral mass.
 #'
 #' @return The function returns the m/z value calculated
 #'
 #' @export
 
-get_comp_mass <- function(comp_formula, polarity){
+get_comp_mass <- function(comp_formula, polarity = NULL){
 
 
   #### INNITIALIZATION ####
@@ -33,6 +33,9 @@ get_comp_mass <- function(comp_formula, polarity){
 
   #mass = mass_dict[['H']]
 
+  if(is.null(polarity)){
+    mass = 0
+  }
   if(polarity == "pos")
   {
     mass = 1.007276
