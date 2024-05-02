@@ -41,7 +41,6 @@
 #' @import tidyverse
 #' @import dplyr
 #' @import IsoCorrectoR
-#' @import MassTools
 #'
 #' @export
 #'
