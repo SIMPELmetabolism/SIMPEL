@@ -23,6 +23,8 @@
 #' @return The function returns a list that contains all figures generated and a dataframe with cluster information. It also
 #' provides a pdf file containing clustering results saved into specified directory
 #'
+#' @importFrom drc drm
+#'
 #' @export
 #'
 #' @examples
@@ -76,7 +78,7 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
   last_time <- max(as.numeric(gsub("X", "", data_clean(names(catSubset))))) # for logistic fit prediction
   min_initial_time <- do.call(pmin, catSubset[, c(names(catSubset) %like% paste0("X",initial_time,"_"))]) # min of the initial time for each compound
   catSubset <- catSubset - min_initial_time
-  
+
   #there'll be some na's so set them to zero
   catSubset[is.na(catSubset)] = 0
 
@@ -94,14 +96,14 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
   times = data_clean(colnames(catSubset)) %>%
     sub(".", "", .) %>%
     as.numeric()
-  every_compound = do.call(rbind, 
+  every_compound = do.call(rbind,
                            lapply(1:nrow(catSubset), function(x){
                              current_comp = data.frame(time=times, value=unlist(catSubset[x,])) %>%
-                               group_by(time) %>% 
+                               group_by(time) %>%
                                summarise_at(vars(value), list(val = mean)) %>%
                                mutate(bin = rownames(catSubset)[x], Cluster = as.factor(kmeans_object[["cluster"]][x]))
                            }))
-  
+
   #bring the kmeans and the PCA in here
   #have one object to store all of the plots
   plotsList <- list()
@@ -411,19 +413,19 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
 
   if(fit == TRUE){
     # add logistic curve fitting
-    logistic_fit = do.call(rbind, 
+    logistic_fit = do.call(rbind,
                            lapply(1:nClust, function(x){
-                             subdata_cluster = every_compound %>% filter(Cluster == x)
-                             subdata_cluster = subdata_cluster %>% 
-                               dplyr::group_by(time) %>% 
-                               dplyr::mutate(w = 1/abs(val - mean(val))) %>% 
+                             subdata_cluster = every_compound %>%
+                               dplyr::filter(Cluster == x) %>%
+                               dplyr::group_by(time) %>%
+                               dplyr::mutate(w = 1/abs(val - mean(val))) %>%
                                dplyr::mutate(w = (w-min(w)) / (max(w)-min(w))) %>%
                                ungroup()
                              # logistic fit
                              mL <- drm(val~time, weights = w, data = subdata_cluster, fct = L.5(), type = "continuous")
                              # predictions and confidence intervals
-                             subdata_fit <- expand.grid(time = seq(initial_time, last_time, length = 100)) 
-                             pm <- predict(mL, newdata = subdata_fit, interval = "confidence") 
+                             subdata_fit <- expand.grid(time = seq(initial_time, last_time, length = 100))
+                             pm <- predict(mL, newdata = subdata_fit, interval = "confidence")
                              subdata_fit$p <- pm[,1]
                              subdata_fit$pmin <- pm[,2]
                              subdata_fit$pmax <- pm[,3]
@@ -436,7 +438,7 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
       geom_line(data = logistic_fit, aes(x = time, y = p, color = cluster, group = cluster)) +
       ggtitle(paste0(forAllAvgsCluster, "_Logistic Fit"))
   }
-  
+
   autoplotAndGlobalClusters = append(listToAdd, listToAdd2)
 
   ##prepend our global kmeans plots to the full list of plot
