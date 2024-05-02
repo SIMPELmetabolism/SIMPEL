@@ -11,6 +11,7 @@ getClustersAndPlots(
   nClust = 0,
   labels = "Bin",
   doMIDs = FALSE,
+  fit = FALSE,
   outputName = "_"
 )
 }

@@ -4,16 +4,16 @@
 \alias{get_comp_mass}
 \title{Calculate m/z for given formulas}
 \usage{
-get_comp_mass(comp_formula, polarity)
+get_comp_mass(comp_formula, polarity = NULL)
 }
 \arguments{
-\item{comp_formula}{is the formula from the annotation file}
+\item{comp_formula}{Formula of the compound}
 
-\item{polarity}{will be the polarity from both Compound_Data and XCMS_data}
+\item{polarity}{Polarity of the compound, can be "pos" or "neg" or \code{NULL}. Default to \code{NULL} for a neutral mass.}
 }
 \value{
 The function returns the m/z value calculated
 }
 \description{
-This function is calculating the m/z for the chemical formulas provided
+This function is calculating the m/z for a chemical formula provided
 }
