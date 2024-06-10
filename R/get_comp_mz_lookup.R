@@ -40,7 +40,7 @@ get_comp_mz_lookup <- function(compound_data, comp_formula, r_time, ppm, polarit
 
   # loops
   ind = which(elementDf$InLabel==1)
-  isotopeDf = expand.grid(sapply(elementDf$number[ind], function(x) c(0:x)))
+  isotopeDf = expand.grid(sapply(elementDf$number[ind], function(x) c(0:x), simplify = F))
   colnames(isotopeDf) = elementDf$element[ind]
   tempName = as.matrix(apply(isotopeDf[,1:ncol(isotopeDf), drop=F], 1 ,
                              function(x) paste0(x, elementDf$element[ind], collapse = ''))
