@@ -240,7 +240,8 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     left_join(. , MIDs_tableScaled %>%
                 dplyr::filter(total_isotopes == 0) %>%
                 dplyr::select(mz, rt, polarity, Bin, Compound, Formula),
-              by=join_by(Bin))
+              by=join_by(Bin)) %>%
+    as.data.frame()
 
 
   #remove bins that have no M0s
@@ -250,12 +251,41 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
   label_enrichment = label_enrichment[!label_enrichment$Bin %in% vecOfNoMIDs,]
 
 
+  # To get subsets of clean bins (bins with small se)
+  data_cols = colnames(MIDs_table)[colnames(MIDs_table) %like% "_.+_"]
+  clean_subset = MIDs_table %>%
+    dplyr::filter(total_isotopes == 0) %>%
+    dplyr::select(all_of(data_cols), Bin) %>%
+    reshape2::melt(measure.vars = data_cols, variable.name = "sample") %>%
+    dplyr::mutate(sample = as.character(sample), 
+                  time = as.numeric(sub(".","",sapply(strsplit(sample, '[_]' ), `[` , 1))), 
+                  category = sapply(strsplit(sample, '[_]' ), `[` , 2)) %>%
+    dplyr::group_by(Bin, time, category) %>%
+    summarise_at(vars(value), list(se = ~sd(.)/sqrt(length(.)), t_crit = function(x) qt(0.975,df=length(x)-1))) %>%
+    dplyr::mutate(se = coalesce(se, 0)) %>%
+    ungroup() %>%
+    dplyr::group_by(Bin, category) %>%
+    dplyr::summarise(clean = sum(se > 7.5) < 2)
+  clean_bins = lapply(unique(clean_subset$category), function(category) clean_subset$Bin[clean_subset$category==category & clean_subset$clean])
+  names(clean_bins) = unique(clean_subset$category)
+  clean_objects = unlist(lapply(unique(clean_subset$category), function(x) 
+                  return(list(MIDs_table[MIDs_table$Bin %in% clean_bins[[x]],],
+                         MIDs_tableScaled[MIDs_tableScaled$Bin %in% clean_bins[[x]],],
+                         average_labeling[average_labeling$Bin %in% clean_bins[[x]],],
+                         label_enrichment[label_enrichment$Bin %in% clean_bins[[x]],]))), recursive = FALSE)
+  combs = expand.grid(c("MIDs_table_clean_", "MIDs_tableScaled_clean_", "average_labeling_clean_", "label_enrichment_clean_"), unique(clean_subset$category))
+  names(clean_objects) = paste0(combs$Var1, combs$Var2)
+
+
   if (!is.null(output))
   {
-    write.table(MIDs_table, file = file.path("./get_table_objects", paste(output, "MIDs.txt", sep = "_")), sep = "\t")
-    write.table(MIDs_tableScaled, file = file.path("./get_table_objects", paste(output, "scaled_MIDs.txt", sep = "_")), sep = "\t")
-    write.table(average_labeling, file = file.path("./get_table_objects", paste(output, "average_labeling.txt", sep = "_")), sep = "\t")
-    write.table(label_enrichment, file = file.path("./get_table_objects", paste(output, "mole_equivalents_of_label.txt", sep = "_")), sep = "\t")
+    write.csv(MIDs_table, file = file.path("./get_table_objects", paste(output, "MIDs.csv", sep = "_")), row.names = FALSE)
+    write.csv(MIDs_tableScaled, file = file.path("./get_table_objects", paste(output, "scaled_MIDs.csv", sep = "_")), row.names = FALSE)
+    write.csv(average_labeling, file = file.path("./get_table_objects", paste(output, "average_labeling.csv", sep = "_")), row.names = FALSE)
+    write.csv(label_enrichment, file = file.path("./get_table_objects", paste(output, "mole_equivalents_of_label.csv", sep = "_")), row.names = FALSE)
+    lapply(names(clean_objects), function(name) {
+      write.csv(clean_objects[[name]], paste0("get_table_objects/", name, ".csv"), row.names = FALSE)
+    })
   }
 
 
@@ -306,7 +336,8 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     left_join(. , scaledMIDsTableNAcorrected %>%
                 dplyr::filter(total_isotopes == 0) %>%
                 dplyr::select(mz, rt, polarity, Bin, Compound, Formula),
-              by=join_by(Bin))
+              by=join_by(Bin)) %>%
+    as.data.frame()
 
 
   # put all compounds that only had unlabeled isotopologues back to the tables
@@ -324,15 +355,28 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
   MIDs_tableNAcorrected = MIDs_tableNAcorrected[!MIDs_tableNAcorrected$Bin %in% vecOfNoMIDs,]
   scaledMIDsTableNAcorrected = scaledMIDsTableNAcorrected[!scaledMIDsTableNAcorrected$Bin %in% vecOfNoMIDs,]
   average_labelingNAcorrected = average_labelingNAcorrected[!average_labelingNAcorrected$Bin %in% vecOfNoMIDs,]
-  labelEnrichmentMIDsNAcorrected = labelEnrichmentMIDsNAcorrected[!labelEnrichmentMIDsNAcorrected$Bin %in% vecOfNoMIDs,]
+  labelEnrichmentMIDsNAcorrected = labelEnrichmentMIDsNAcorrected[!labelEnrichmentMIDsNAcorrected$Bin %in% vecOfNoMIDs,] 
+
+
+  # subset by clean bins
+  clean_objects_NAcorrected = unlist(lapply(unique(clean_subset$category), function(x) 
+    return(list(MIDs_tableNAcorrected[MIDs_tableNAcorrected$Bin %in% clean_bins[[x]],],
+                scaledMIDsTableNAcorrected[scaledMIDsTableNAcorrected$Bin %in% clean_bins[[x]],],
+                average_labelingNAcorrected[average_labelingNAcorrected$Bin %in% clean_bins[[x]],],
+                labelEnrichmentMIDsNAcorrected[labelEnrichmentMIDsNAcorrected$Bin %in% clean_bins[[x]],]))), recursive = FALSE)
+  combs = expand.grid(c("MIDsTableNAcorrected_clean_", "MIDsTableScaledNAcorrected_clean_", "averageLabelingNAcorrected_clean_", "labelEnrichmentNAcorrected_clean_"), unique(clean_subset$category))
+  names(clean_objects_NAcorrected) = paste0(combs$Var1, combs$Var2)
 
 
   if (!is.null(output))
   {
-    write.table(MIDs_tableNAcorrected, file =  file.path("NA_corrected", paste(output, "MIDsNAcorrected.txt", sep = "_")), sep = "\t")
-    write.table(scaledMIDsTableNAcorrected, file = file.path("NA_corrected", paste(output, "scaled_MIDsNAcorrected.txt", sep = "_")), sep = "\t")
-    write.table(average_labelingNAcorrected, file = file.path("NA_corrected", paste(output, "average_labelingNAcorrected.txt", sep = "_")), sep = "\t")
-    write.table(labelEnrichmentMIDsNAcorrected, file = file.path("NA_corrected", paste(output, "mole_equivalents_of_labelNAcorrected.txt", sep = "_")), sep = "\t")
+    write.csv(MIDs_tableNAcorrected, file =  file.path("NA_corrected", paste(output, "MIDsNAcorrected.csv", sep = "_")), row.names = FALSE)
+    write.csv(scaledMIDsTableNAcorrected, file = file.path("NA_corrected", paste(output, "scaled_MIDsNAcorrected.csv", sep = "_")), row.names = FALSE)
+    write.csv(average_labelingNAcorrected, file = file.path("NA_corrected", paste(output, "average_labelingNAcorrected.csv", sep = "_")), row.names = FALSE)
+    write.csv(labelEnrichmentMIDsNAcorrected, file = file.path("NA_corrected", paste(output, "mole_equivalents_of_labelNAcorrected.csv", sep = "_")), row.names = FALSE)
+    lapply(names(clean_objects_NAcorrected), function(name) {
+      write.csv(clean_objects_NAcorrected[[name]], paste0("NA_corrected/", name, ".csv"), row.names = FALSE)
+    })
   }
 
   #return all of outputs as a get_table_objects() object
@@ -340,4 +384,5 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
                     average_labeling = average_labeling, mol_equivalent_labeling = label_enrichment,
                     MIDS_Corrected = MIDs_tableNAcorrected, scaledMIDsCorrected = scaledMIDsTableNAcorrected,
                     averageLabeling_corrected = average_labelingNAcorrected, molEquivalent_corrected = labelEnrichmentMIDsNAcorrected)
+  listReturn = c(listReturn, clean_objects, clean_objects_NAcorrected)
 }
