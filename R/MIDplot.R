@@ -142,8 +142,19 @@ MIDplot <- function(myData, Category, splitIsotopologue = "default", axisTitle="
       }
     }
 
+    calculate_total_isotopes <- function(factor_value) {
+      # Extract numeric values from the factor string and sum them
+      sum(as.numeric(unlist(regmatches(factor_value, gregexpr("[0-9]+", factor_value)))))
+    }
+    
+    df$Isotopologue = as.factor(df$Isotopologue)
+
     # reorder Isotopologue to avoid plots showing M0,M1,M10,... (we want M0,M1,M2,...)
-    df$Isotopologue <- factor(df$Isotopologue, levels = unique(df$Isotopologue))
+    if(grepl('M', df$Isotopologue[1])){
+      df$Isotopologue = factor(df$Isotopologue, levels = levels(df$Isotopologue)[order(as.numeric(gsub("M", "", levels(df$Isotopologue))))])
+    }else{
+      df$Isotopologue = factor(df$Isotopologue, levels = levels(df$Isotopologue)[order(sapply(levels(df$Isotopologue), calculate_total_isotopes))])
+    }
 
     # just M0
     smallDf <- subset(df, Isotopologue == splitIsotopologue)
