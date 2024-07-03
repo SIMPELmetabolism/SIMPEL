@@ -33,7 +33,8 @@ Imports:
     IsoCorrectoR,
     data.table,
     CHNOSZ,
-    drc
+    drc,
+    motifcluster
 Suggests:
     xcms
 Encoding: UTF-8

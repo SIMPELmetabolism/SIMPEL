@@ -24,6 +24,7 @@
 #' provides a pdf file containing clustering results saved into specified directory
 #'
 #' @importFrom drc drm
+#' @importFrom motifcluster kmeanspp
 #'
 #' @export
 #'
@@ -90,7 +91,7 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
   }
 
   #go ahead and do the kmeans right away on the normalized table
-  kmeans_object = kmeans(catSubset, nClust, nstart = howmanyN, iter.max = 100)
+  kmeans_object = kmeanspp(catSubset, k=nClust, nstart = howmanyN, iter.max = 100)
 
   # summarize each row for logistic function fitting
   times = data_clean(colnames(catSubset)) %>%
@@ -352,8 +353,8 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
       listToAdd1[[1]] = ggplot(dfAllClustersMIDs, aes(x=Time,y=mean,colour=SortNames,group=SortNames)) + geom_line() + ggtitle(MIDsAllClustersPlotName) + geom_ribbon(aes(ymax=mean + sd, ymin=mean - sd, linetype=NA, fill = factor(SortNames)), show.legend = F, alpha=.1)
 
       #store all of the MIDs plots in a list
-      allAverageAndMIDSCluster = prepend(MidsPlotList,listToAdd1)
-      plotsList = prepend(allAverageAndMIDSCluster,plotsList)
+      allAverageAndMIDSCluster = append(listToAdd1, MidsPlotList)
+      plotsList = append(plotsList, allAverageAndMIDSCluster)
     }
   }
 
@@ -421,6 +422,13 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
                                dplyr::mutate(w = 1/abs(val - mean(val))) %>%
                                dplyr::mutate(w = (w-min(w)) / (max(w)-min(w))) %>%
                                ungroup()
+                             # to avoid w being undefined in the case of only one of two compounds in a cluster
+                             if(length(unique(subdata_cluster$bin)) == 1){ # if only one compound in a cluster
+                               subdata_cluster$w = 1
+                             }
+                             if(length(unique(subdata_cluster$bin)) == 2){ # if only two compounds in a cluster
+                               subdata_cluster$w = 0.5
+                             }
                              # logistic fit
                              mL <- drm(val~time, weights = w, data = subdata_cluster, fct = L.5(), type = "continuous")
                              # predictions and confidence intervals
