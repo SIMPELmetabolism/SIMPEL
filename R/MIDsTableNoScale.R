@@ -92,7 +92,7 @@ MIDsTableNoScale = function(XCMS_data, label_scheme)
     hydrogens = AllMIDSubsBeforeCategories$hydrogen
 
     #now we've got everything that we need
-    AllMIDSubsBeforeCategories = subset(MIDs_table,  Bin == myBin, select = -c(Bin,Formula, mz, rt, carbon, nitrogen, hydrogen, total_isotopes, comp_result,polarity) )
+    AllMIDSubsBeforeCategories = subset(MIDs_table,  Bin == myBin, select = -c(Bin, Formula, mz, rt, carbon, nitrogen, hydrogen, comp_result, polarity) )
 
     #if there's no M0 keep track of the bin so that we can remove it.  If there is no M0, the bin is likely noise so keep track of the bin so we can remove it
     if(nrow(M0) == 0)
@@ -115,7 +115,7 @@ MIDsTableNoScale = function(XCMS_data, label_scheme)
       reps = reps[is.na(reps) == FALSE]
 
       #and get the categories as well, which may be treatment coniditions
-      categories = unique(data_cleanII(colnames(AllMIDSubsBeforeCategories)))
+      categories = unique(data_cleanII(colnames(AllMIDSubsBeforeCategories)[colnames(AllMIDSubsBeforeCategories) %like% "_.+_"]))
       categories = unique(categories)
       categories = categories[is.na(categories) == FALSE]
 
@@ -135,7 +135,7 @@ MIDsTableNoScale = function(XCMS_data, label_scheme)
 
           whichRep = reps[rep]
           whichCategory = categories[category]
-          AllMIDSubs = subset(AllMIDSubsBeforeCategories, select = repsAndCategories)
+          AllMIDSubs = as.data.frame(subset(AllMIDSubsBeforeCategories, select = repsAndCategories))
 
           #this will take us across each timepoint for the given
           #category and replicate so that we can track how the MIDs change across time
@@ -204,6 +204,7 @@ MIDsTableNoScale = function(XCMS_data, label_scheme)
 
   #initialize the isotopologue column
   MIDs_table$Isotopologue = MIDs_table$total_isotopes
+  MIDs_table = as.data.frame(MIDs_table)
   #for each MID, go through the MID table and fill in the number of labeled carbon and nitrogen
   elementInLabel = c("C","N","H") %in% unlist(strsplit(label_scheme, ""))
   for(i in 1:nrow(MIDs_table))
