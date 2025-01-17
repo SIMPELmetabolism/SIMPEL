@@ -75,10 +75,10 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
   catSubset = mydata1[,colnames(mydata1) %like% Category]
 
   # move everything down parallelly so that initial labeling wouldn't be a large number to cause confusion
-  initial_time <- min(as.numeric(gsub("X", "", data_clean(names(catSubset)))))
-  last_time <- max(as.numeric(gsub("X", "", data_clean(names(catSubset))))) # for logistic fit prediction
-  min_initial_time <- do.call(pmin, catSubset[, c(names(catSubset) %like% paste0("X",initial_time,"_"))]) # min of the initial time for each compound
-  catSubset <- catSubset - min_initial_time
+  # initial_time <- min(as.numeric(gsub("X", "", data_clean(names(catSubset)))))
+  # last_time <- max(as.numeric(gsub("X", "", data_clean(names(catSubset))))) # for logistic fit prediction
+  # min_initial_time <- do.call(pmin, catSubset[, c(names(catSubset) %like% paste0("X",initial_time,"_"))]) # min of the initial time for each compound
+  # catSubset <- catSubset - min_initial_time
 
   #there'll be some na's so set them to zero
   catSubset[is.na(catSubset)] = 0
@@ -162,8 +162,8 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
     {
       whichTimepoint = vecOfExpTimes[timepoint]
       #this is going to be the avg's and standard deviation for all of the compounds associated with a cluster
-      myMeanToAdd = mean(rowMeans(for_plottingFurther[,sapply(strsplit(colnames(for_plottingFurther) , '[_]' ), `[` , 1) == whichTimepoint]))
-      mySdToAdd = sd(rowMeans(for_plottingFurther[,sapply(strsplit(colnames(for_plottingFurther) , '[_]' ), `[` , 1) == whichTimepoint]))
+      myMeanToAdd = mean(rowMeans(for_plottingFurther[,sapply(strsplit(colnames(for_plottingFurther) , '[_]' ), `[` , 1) == whichTimepoint, drop = FALSE]))
+      mySdToAdd = sd(rowMeans(for_plottingFurther[,sapply(strsplit(colnames(for_plottingFurther) , '[_]' ), `[` , 1) == whichTimepoint, drop = FALSE]))
       dfAllClusters = rbind(dfAllClusters, data.frame(Time=whichTimepoint, mean=myMeanToAdd, sd=mySdToAdd,Cluster=theClusterAvgNum))
     }
 
