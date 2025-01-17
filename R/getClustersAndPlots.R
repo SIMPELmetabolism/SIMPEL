@@ -75,9 +75,9 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
   catSubset = mydata1[,colnames(mydata1) %like% Category]
 
   # move everything down parallelly so that initial labeling wouldn't be a large number to cause confusion
-  # initial_time <- min(as.numeric(gsub("X", "", data_clean(names(catSubset)))))
-  # last_time <- max(as.numeric(gsub("X", "", data_clean(names(catSubset))))) # for logistic fit prediction
-  # min_initial_time <- do.call(pmin, catSubset[, c(names(catSubset) %like% paste0("X",initial_time,"_"))]) # min of the initial time for each compound
+  initial_time <- min(as.numeric(gsub("X", "", data_clean(names(catSubset)))))
+  last_time <- max(as.numeric(gsub("X", "", data_clean(names(catSubset))))) # for logistic fit prediction
+  min_initial_time <- do.call(pmin, catSubset[, c(names(catSubset) %like% paste0("X",initial_time,"_"))]) # min of the initial time for each compound
   # catSubset <- catSubset - min_initial_time
 
   #there'll be some na's so set them to zero
