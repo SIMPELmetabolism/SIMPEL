@@ -149,7 +149,7 @@ label_enrichment_plot <- function(mydata, Category, yLim=NULL,xLim=NULL, axisTit
     if(is.null(yLim) == TRUE)
     {
       # set yLim to 10% more than the max possible value
-      yLim = (max(allMyInfoAvg) + max(allMyInfoSD)) * 1.1
+      yLim = (max(allMyInfoAvg) + max(c(0, allMyInfoSD), na.rm = TRUE)) * 1.1
       #print(yLim)
       #print("is yLim")
       #print(max(allMyInfoAvg+allMyInfoSD))
