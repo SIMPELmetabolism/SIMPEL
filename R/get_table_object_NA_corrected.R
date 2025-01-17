@@ -140,56 +140,29 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     myFormula = as.character(compounds_data[i, "formula"])
     myCompound = as.character(compounds_data[i, "Compound"])
 
-    #looping through the xcms data
-
-    #for each feature in the XCMS data, id'd by RT and m/z
-    #determine if it is one of the C or N or a combination of isotopes by whether or not
-    #it falls within the error in ppm that are stored in comp_lookup_table
-    for(j in 1:nrow(XCMS_data)){
-      if(is.na(XCMS_data[j, "comp_result"]))
-      {
-        #only make sure to search the correct polarity
-        if(XCMS_data[j, "polarity"] == polarity)
-        {
-          #print(j)
-          x = as.numeric(XCMS_data[j, "mz"])
-          y = as.numeric(XCMS_data[j, "rt"])
-
-          #determine if this feature, id'd by m/z and RT is one of the C and N isotopes
-          #whose ppm error is stored in comp_lookup_table
-          #print("in the second loop")
-          #add the number of N's and the number of C's
-          #add the isotopologue columns
-          val <- get_comp_stage(x, y, comp_lookup_table, r_time, rt_tolerance)
-
-          if(is.null(val) == FALSE)
-          {
-
-            XCMS_data[j, "comp_result"] <- val$compound
-            XCMS_data[j, "carbon"] <- val$carbon
-            XCMS_data[j, "nitrogen"] <- val$nitrogen
-            XCMS_data[j, "hydrogen"] <- val$hydrogen
-
-            isotopeNumbers = val$carbon$carbon + val$nitrogen$nitrogen + val$hydrogen$hydrogen
-
-            XCMS_data[j, "total_isotopes"] <- isotopeNumbers
-            XCMS_data[j, "Bin"] <- myBin
-            XCMS_data[j, "Compound"] <- myCompound
-            XCMS_data[j, "Formula"] <- myFormula
-
-          }
-
-          if(is.null(val) == TRUE)
-          {
-            XCMS_data[j, "comp_result"] <- NA
-            XCMS_data[j, "carbon"] <- 0
-            XCMS_data[j, "nitrogen"] <- 0
-            XCMS_data[j, "hydrogen"] <- 0
-            XCMS_data[j, "total_isotopes"] <- 0
-            XCMS_data[j, "Bin"] <- myBin
-          }
-
-        }
+    for(iso_ind in 1:length(comp_lookup_table)){
+      match_ind <- which(XCMS_data$rt <= r_time+rt_tolerance & XCMS_data$rt >= r_time-rt_tolerance &
+                         XCMS_data$mz <= comp_lookup_table[[iso_ind]]$ub & XCMS_data$mz >= comp_lookup_table[[iso_ind]]$lb &
+                         is.na(XCMS_data$comp_result) & XCMS_data$polarity == polarity)
+      match_exist <- ifelse(length(match_ind) > 0, 
+                            ifelse(!is.na(match_ind), TRUE, FALSE),
+                            FALSE)
+      if(match_exist){
+        # if multiple matches take the one with the closest m/z
+        match_ind <- match_ind[which.min(abs(XCMS_data$mz[match_ind] - comp_lookup_table[[iso_ind]]$wc))]
+        XCMS_data[match_ind, "comp_result"] <- names(comp_lookup_table)[[iso_ind]]
+        XCMS_data[match_ind, "carbon"] <- comp_lookup_table[[iso_ind]]$carbon
+        XCMS_data[match_ind, "nitrogen"] <- comp_lookup_table[[iso_ind]]$nitrogen
+        XCMS_data[match_ind, "hydrogen"] <- comp_lookup_table[[iso_ind]]$hydrogen
+        
+        isotopeNumbers = comp_lookup_table[[iso_ind]]$carbon + 
+          comp_lookup_table[[iso_ind]]$nitrogen + 
+          comp_lookup_table[[iso_ind]]$hydrogen
+        
+        XCMS_data[match_ind, "total_isotopes"] <- isotopeNumbers
+        XCMS_data[match_ind, "Bin"] <- myBin
+        XCMS_data[match_ind, "Compound"] <- myCompound
+        XCMS_data[match_ind, "Formula"] <- myFormula
       }
     }
   }
