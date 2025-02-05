@@ -91,7 +91,7 @@ PCA_and_heatmap <- function(mydata1, PCMax=3, heatMapCategories, labels="Bin", o
             autoplotList = list()
             autoplotList[[1]] = print(autoplot(prcomp(t(mydata1), center = TRUE, scale. = TRUE), 
                                                data =  DataFrameLabel, colour = 'Time', shape = 'Category', 
-                                               frame.colour = 'CategoryTime', size = 3))
+                                               frame.colour = 'CategoryTime', size = 3, x = y, y = x))
             allTotFigures = append(allTotFigures,autoplotList)
           }
         }
