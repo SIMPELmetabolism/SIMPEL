@@ -67,14 +67,14 @@ PCA_and_heatmap <- function(mydata1, PCMax=3, heatMapCategories, labels="Bin", o
   #and that we're including a column with the category + time as well as a separate
   #one with just the time
   DataFrameLabel$CategoryTime = paste(data_cleanII(as.character(DataFrameLabel$Samples)),data_clean(as.character(DataFrameLabel$Samples)), sep = "_")
-  DataFrameLabel$Time = data_clean(as.character(DataFrameLabel$Samples))
+  DataFrameLabel$Time = sub(".", "", data_clean(as.character(DataFrameLabel$Samples)))
 
   #just make sure that we're always having category come first
   #originally this was Category
   DataFrameLabel$Category = gsub("*.*_(.*)_.*", "\\1", DataFrameLabel$Samples)
 
   #get PCA object to determine maximum number of PC's
-  prcompObject = prcomp(t(mydata1))
+  prcompObject = prcomp(t(mydata1), center = TRUE, scale. = TRUE)
 
   if(PCMax > 0)
   {
@@ -89,7 +89,9 @@ PCA_and_heatmap <- function(mydata1, PCMax=3, heatMapCategories, labels="Bin", o
           {
             #second plot, coloring by time and then Category as well
             autoplotList = list()
-            autoplotList[[1]] = print(autoplot(prcomp(t(mydata1)), data =  DataFrameLabel, colour = 'CategoryTime', shape = 'Category', frame.colour = 'CategoryTime', size = 3, x = x, y = y))
+            autoplotList[[1]] = print(autoplot(prcomp(t(mydata1), center = TRUE, scale. = TRUE), 
+                                               data =  DataFrameLabel, colour = 'Time', shape = 'Category', 
+                                               frame.colour = 'CategoryTime', size = 3))
             allTotFigures = append(allTotFigures,autoplotList)
           }
         }
