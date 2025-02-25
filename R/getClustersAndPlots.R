@@ -23,7 +23,7 @@
 #' @return The function returns a list that contains all figures generated and a dataframe with cluster information. It also
 #' provides a pdf file containing clustering results saved into specified directory
 #'
-#' @importFrom drc drm
+#' @import drc
 #' @importFrom motifcluster kmeanspp
 #'
 #' @export

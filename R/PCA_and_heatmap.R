@@ -4,11 +4,11 @@
 #' to allow comparison of time course labeling enrichment data obtained from a non-stationary isotopic labeling experiment. In addition, this function
 #' also plots the label enrichment for each of the compounds as a heat map to easily identify compounds that have significant labeling using global view
 #'
-#' @param mydata1 object (1) The 'average_labeling' or the 'mol_equivalent_labeling' object created using \link{get_table_objects_NA_corrected} function
+#' @param mydata1 object (1) the 'average_labeling' or the 'mol_equivalent_labeling' object created using \link{get_table_objects_NA_corrected} function
 #' @param heatMapCategories string (1) or (2) c("Category1") or c("Category1", "Category2") The category to be used for plotting a heatmap
 #' @param PCMax numeric (1) maximum numbers of PC's to plot
 #' @param labels string (1) label to be used for heat maps i.e. "Bin" or "Compound" column
-#' @param outputName string (1) The name to be appended to the the output pdf
+#' @param outputName string (1) the name to be appended to the the output pdf
 #'
 #' @seealso \link{get_table_objects_NA_corrected}, \link{MIDplot}, \link{label_enrichment_plot}, \link{getClustersAndPlots}
 #'
@@ -34,7 +34,7 @@ PCA_and_heatmap <- function(mydata1, PCMax=3, heatMapCategories, labels="Bin", o
   outputName = outputName
 
 
-  
+
   #remove bin column from table to do PCA on
   rownames(mydata1) =  pull(mydata1, labels)
   mydata1Backup = mydata1
@@ -89,8 +89,8 @@ PCA_and_heatmap <- function(mydata1, PCMax=3, heatMapCategories, labels="Bin", o
           {
             #second plot, coloring by time and then Category as well
             autoplotList = list()
-            autoplotList[[1]] = print(autoplot(prcomp(t(mydata1), center = TRUE, scale. = TRUE), 
-                                               data =  DataFrameLabel, colour = 'Time', shape = 'Category', 
+            autoplotList[[1]] = print(autoplot(prcomp(t(mydata1), center = TRUE, scale. = TRUE),
+                                               data =  DataFrameLabel, colour = 'Time', shape = 'Category',
                                                frame.colour = 'CategoryTime', size = 3, x = y, y = x))
             allTotFigures = append(allTotFigures,autoplotList)
           }

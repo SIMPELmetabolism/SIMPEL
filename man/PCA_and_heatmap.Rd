@@ -13,7 +13,7 @@ PCA_and_heatmap(
 )
 }
 \arguments{
-\item{mydata1}{object (1) The 'average_labeling' or the 'mol_equivalent_labeling' object created using \link{get_table_objects_NA_corrected} function}
+\item{mydata1}{object (1) the 'average_labeling' or the 'mol_equivalent_labeling' object created using \link{get_table_objects_NA_corrected} function}
 
 \item{PCMax}{numeric (1) maximum numbers of PC's to plot}
 
@@ -21,7 +21,7 @@ PCA_and_heatmap(
 
 \item{labels}{string (1) label to be used for heat maps i.e. "Bin" or "Compound" column}
 
-\item{outputName}{string (1) The name to be appended to the the output pdf}
+\item{outputName}{string (1) the name to be appended to the the output pdf}
 }
 \value{
 The function returns a list containing generated figures along with a pdf file with PCA plots comparing all PCs up to the user specified number and heat maps with label enrichment
