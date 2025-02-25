@@ -249,6 +249,9 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
   combs = expand.grid(c("MIDs_table_clean_", "MIDs_tableScaled_clean_", "average_labeling_clean_", "label_enrichment_clean_"), unique(clean_subset$category))
   names(clean_objects) = paste0(combs$Var1, combs$Var2)
 
+  # object for bubble plot to visualize pool sizes across time                              
+  forBubblePlot <- XCMS_data
+                                
 
   if (!is.null(output))
   {
@@ -259,6 +262,7 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     lapply(names(clean_objects), function(name) {
       write.csv(clean_objects[[name]], paste0("get_table_objects/", name, ".csv"), row.names = FALSE)
     })
+    write.csv(forBubblePlot, file = file.path("./get_table_objects", paste(output, "forBubblePlot.csv", sep = "_")), row.names = FALSE)
   }
 
 
@@ -356,6 +360,7 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
   listReturn = list(MIDs = MIDs_table, scaled_MIDs = MIDs_tableScaled,
                     average_labeling = average_labeling, mol_equivalent_labeling = label_enrichment,
                     MIDS_Corrected = MIDs_tableNAcorrected, scaledMIDsCorrected = scaledMIDsTableNAcorrected,
-                    averageLabeling_corrected = average_labelingNAcorrected, molEquivalent_corrected = labelEnrichmentMIDsNAcorrected)
+                    averageLabeling_corrected = average_labelingNAcorrected, molEquivalent_corrected = labelEnrichmentMIDsNAcorrected,
+                    forBubblePlot = forBubblePlot)
   listReturn = c(listReturn, clean_objects, clean_objects_NAcorrected)
 }
