@@ -143,7 +143,7 @@ MIDsTableNoScale = function(XCMS_data, label_scheme)
           for(j in 1:ncol(AllMIDSubs))
           {
             myToGetPercent = AllMIDSubs[,j]
-            justToSum = colSums(AllMIDSubs)[j]
+            justToSum = colSums(AllMIDSubs, na.rm = TRUE)[j]
 
             justPercent =  (myToGetPercent / justToSum) * 100
 
