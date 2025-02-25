@@ -24,6 +24,9 @@ MIDs_comparison <- function(data, time, axisTitle = "MID", plotTitle = "Bin"){
   if(length(data_cols) == 0){
     stop("Selected time point not available in the data")
   }
+  if(plotTitle == "Compound" & !"Compound" %in% colnames(data)){
+    stop("Compound column is not present in the data, choose Bin as the plot title")
+  }
   if(plotTitle == "Compound"){
     data <- data %>%
       dplyr::select(-Bin) %>%
