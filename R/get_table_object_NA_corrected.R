@@ -209,7 +209,7 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     dplyr::filter(total_isotopes != 0) %>%
     select(colnames(.)[colnames(.) %like% "_.+_"], Bin) %>%
     group_by(Bin) %>%
-    summarise(across(everything(), sum)) %>%
+    summarise(across(everything(), ~sum(., na.rm = TRUE))) %>%
     left_join(. , MIDs_tableScaled %>%
                 dplyr::filter(total_isotopes == 0) %>%
                 dplyr::select(mz, rt, polarity, Bin, Compound, Formula),
@@ -234,11 +234,11 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
                   time = as.numeric(sub(".","",sapply(strsplit(sample, '[_]' ), `[` , 1))), 
                   category = sapply(strsplit(sample, '[_]' ), `[` , 2)) %>%
     dplyr::group_by(Bin, time, category) %>%
-    summarise_at(vars(value), list(se = ~sd(.)/sqrt(length(.)), t_crit = function(x) qt(0.975,df=length(x)-1))) %>%
+    summarise_at(vars(value), list(se = ~sd(., na.rm = TRUE)/sqrt(length(na.omit(.))), t_crit = function(x) qt(0.975, df = length(na.omit(x))-1))) %>%
     dplyr::mutate(se = coalesce(se, 0)) %>%
     ungroup() %>%
     dplyr::group_by(Bin, category) %>%
-    dplyr::summarise(clean = sum(se > 7.5) < 2)
+    dplyr::summarise(clean = sum(se > 7.5, na.rm = TRUE) < 2)
   clean_bins = lapply(unique(clean_subset$category), function(category) clean_subset$Bin[clean_subset$category==category & clean_subset$clean])
   names(clean_bins) = unique(clean_subset$category)
   clean_objects = unlist(lapply(unique(clean_subset$category), function(x) 
@@ -305,7 +305,7 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     dplyr::filter(total_isotopes != 0) %>%
     select(colnames(.)[colnames(.) %like% "_.+_"], Bin) %>%
     group_by(Bin) %>%
-    summarise(across(everything(), sum)) %>%
+    summarise(across(everything(), ~sum(., na.rm = TRUE))) %>%
     left_join(. , scaledMIDsTableNAcorrected %>%
                 dplyr::filter(total_isotopes == 0) %>%
                 dplyr::select(mz, rt, polarity, Bin, Compound, Formula),
