@@ -35,21 +35,30 @@ MIDs_comparison <- function(data, time, axisTitle = "MID", plotTitle = "Bin"){
   data <- data %>%
     dplyr::select(all_of(c("mz", "rt", "polarity", "Isotopologue", "Bin", data_cols)))
   plot_data <- reshape2::melt(data[,c("Bin", "Isotopologue", data_cols)],
-                              id.vars=c("Bin","Isotopologue"), variable.name="category") %>%
+                              id.vars = c("Bin","Isotopologue"), variable.name = "category") %>%
     dplyr::mutate(category = sapply(strsplit(as.character(category), '[_]' ), `[` , 2)) %>%
     dplyr::group_by(Bin, Isotopologue, category) %>%
     summarise_at(vars(value), list(val = mean, se = ~sd(.)/sqrt(n())))
   plot_list <- list()
   for (i in unique(plot_data$Bin)) {
     current_bin <- plot_data %>%
-      dplyr::filter(Bin==i) %>%
+      dplyr::filter(Bin == i) %>%
       dplyr::mutate(Isotopologue = factor(Isotopologue))
-    current_bin$Isotopologue = factor(current_bin$Isotopologue,
-                                      levels = levels(current_bin$Isotopologue)[order(as.numeric(gsub("M", "", levels(current_bin$Isotopologue))))])
-    p <- ggplot(current_bin, aes(x=Isotopologue, y=val, fill=category)) +
+    # reorder the isotopologues
+    if(grepl("M", current_bin$Isotopologue[1])){
+      current_bin$Isotopologue = factor(current_bin$Isotopologue, 
+                                        levels = levels(current_bin$Isotopologue)[order(as.numeric(gsub("M", "", levels(current_bin$Isotopologue))))])
+    }else{
+      calculate_total_isotopes <- function(factor_value) {
+        sum(as.numeric(unlist(regmatches(factor_value, gregexpr("[0-9]+", factor_value)))))
+      }
+      current_bin$Isotopologue = factor(current_bin$Isotopologue, 
+                                        levels = levels(current_bin$Isotopologue)[order(sapply(levels(current_bin$Isotopologue), calculate_total_isotopes))])
+    }
+    p <- ggplot(current_bin, aes(x = Isotopologue, y = val, fill = category)) +
       geom_col(position="dodge") +
-      geom_errorbar(aes(ymin=pmax(0,val-se), ymax=pmin(val+se,100)), width=0.5, position=position_dodge(0.9), linewidth=0.8) +
-      labs(title=paste(i,"at time",time), x = "Isotopologue", y = axisTitle) +
+      geom_errorbar(aes(ymin = pmax(0, val-se), ymax = pmin(val+se, 100)), width = 0.5, position = position_dodge(0.9), linewidth = 0.8) +
+      labs(title = paste(i,"at time",time), x = "Isotopologue", y = axisTitle) +
       ylim(min(0, plot_data$val-plot_data$se), 1.1*max(plot_data$val+plot_data$se))
     plot_list <- append(plot_list, list(p))
   }
