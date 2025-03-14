@@ -59,7 +59,7 @@ MIDs_comparison <- function(data, time, axisTitle = "MID", plotTitle = "Bin"){
       geom_col(position="dodge") +
       geom_errorbar(aes(ymin = pmax(0, val-se), ymax = pmin(val+se, 100)), width = 0.5, position = position_dodge(0.9), linewidth = 0.8) +
       labs(title = paste(i,"at time",time), x = "Isotopologue", y = axisTitle) +
-      ylim(min(0, plot_data$val-plot_data$se), 1.1*max(plot_data$val+plot_data$se))
+      ylim(min(0, current_bin$val-current_bin$se, na.rm = TRUE), 1.05*max(current_bin$val+current_bin$se, na.rm = TRUE))
     plot_list <- append(plot_list, list(p))
   }
   allPlots <- marrangeGrob(plot_list, nrow = 2, ncol = 2)
