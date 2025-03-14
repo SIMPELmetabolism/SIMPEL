@@ -91,8 +91,12 @@ getClustersAndPlots <- function(mydata1, mydata2, Category, nClust=0, labels="Bi
   }
 
   #go ahead and do the kmeans right away on the normalized table
-  kmeans_object = kmeanspp(catSubset, k=nClust, nstart = howmanyN, iter.max = 100)
-
+  if(nClust == 1){
+    kmeans_object = kmeans(catSubset, nClust, nstart = howmanyN, iter.max = 100)
+  }else{
+    kmeans_object = kmeanspp(catSubset, k=nClust, nstart = howmanyN, iter.max = 100)
+  }
+  
   # summarize each row for logistic function fitting
   times = data_clean(colnames(catSubset)) %>%
     sub(".", "", .) %>%
