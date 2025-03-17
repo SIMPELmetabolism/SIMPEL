@@ -194,10 +194,10 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
   #scale the MIDs table
   categories = unique(data_cleanII(colnames(MIDs_table)[colnames(MIDs_table) %like% "_.+_"]))
   MIDs_tableScaled = MIDs_table %>%
-    group_by(Bin) %>%
+    dplyr::group_by(Bin) %>%
     left_join(. , dplyr::select(compounds_data, c('prefix', contains('poolsize'))), by=join_by(Bin==prefix)) %>%
-    mutate(across(contains(paste0(categories[1], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[1]))))) %>%
-    mutate(across(contains(paste0(categories[2], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[2]))))) %>%
+    dplyr::mutate(across(contains(paste0(categories[1], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[1]))))) %>%
+    dplyr::mutate(across(contains(paste0(categories[2], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[2]))))) %>%
     dplyr::select(-contains('poolsize')) %>%
     as.data.frame()
 
@@ -207,9 +207,9 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
   #note that this does not include M0 [unlabeled pool is removed]
   label_enrichment = MIDs_tableScaled %>%
     dplyr::filter(total_isotopes != 0) %>%
-    select(colnames(.)[colnames(.) %like% "_.+_"], Bin) %>%
-    group_by(Bin) %>%
-    summarise(across(everything(), ~sum(., na.rm = TRUE))) %>%
+    dplyr::select(colnames(.)[colnames(.) %like% "_.+_"], Bin) %>%
+    dplyr::group_by(Bin) %>%
+    dplyr::summarise(across(everything(), ~sum(., na.rm = TRUE))) %>%
     left_join(. , MIDs_tableScaled %>%
                 dplyr::filter(total_isotopes == 0) %>%
                 dplyr::select(mz, rt, polarity, Bin, Compound, Formula),
@@ -296,10 +296,10 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
 
   #scale the MIDs table by pool sizes
   scaledMIDsTableNAcorrected = MIDs_tableNAcorrected %>%
-    group_by(Bin) %>%
+    dplyr::group_by(Bin) %>%
     left_join(. , dplyr::select(compounds_data, c('prefix',contains('poolsize'))), by=join_by(Bin==prefix)) %>%
-    mutate(across(contains(paste0(categories[1], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[1]))))) %>%
-    mutate(across(contains(paste0(categories[2], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[2]))))) %>%
+    dplyr::mutate(across(contains(paste0(categories[1], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[1]))))) %>%
+    dplyr::mutate(across(contains(paste0(categories[2], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[2]))))) %>%
     dplyr::select(-contains('poolsize')) %>%
     as.data.frame()
 
@@ -307,9 +307,9 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
   #get the enrichment adjusted MIDs
   labelEnrichmentMIDsNAcorrected = scaledMIDsTableNAcorrected %>%
     dplyr::filter(total_isotopes != 0) %>%
-    select(colnames(.)[colnames(.) %like% "_.+_"], Bin) %>%
-    group_by(Bin) %>%
-    summarise(across(everything(), ~sum(., na.rm = TRUE))) %>%
+    dplyr::select(colnames(.)[colnames(.) %like% "_.+_"], Bin) %>%
+    dplyr::group_by(Bin) %>%
+    dplyr::summarise(across(everything(), ~sum(., na.rm = TRUE))) %>%
     left_join(. , scaledMIDsTableNAcorrected %>%
                 dplyr::filter(total_isotopes == 0) %>%
                 dplyr::select(mz, rt, polarity, Bin, Compound, Formula),
