@@ -438,8 +438,8 @@ NACorrectionFxnII = function(MIDs_table, label_scheme, output="_")
     myNAInfo = NAcorrected[i,]
 
     #get the compound
-    myNAName = unlist(strsplit(rownames(myNAInfo), "_"))[1]
-    myMIDNames =  unlist(strsplit(rownames(myNAInfo), "_"))[2]
+    myNAName = unlist(strsplit(rownames(myNAInfo), "_(?=[^_]+$)", perl = TRUE))[1]
+    myMIDNames = unlist(strsplit(rownames(myNAInfo), "_(?=[^_]+$)", perl = TRUE))[2]
 
     elementInLabel = c("C", "N", "H") %in% unlist(strsplit(label_scheme, ""))
     numOfElements = c(0, 0, 0) # initial value
