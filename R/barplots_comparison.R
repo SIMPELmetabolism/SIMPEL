@@ -36,24 +36,23 @@ barplots_comparison <- function(data, time = "default", axisTitle = "% Labeling"
   for (i in 1:nrow(data)){
     plot_data <- data.frame(value=unlist(data[i, time_cols])) %>%
       dplyr::mutate(time = as.numeric(sub(".","",sapply(strsplit(rownames(.), '[_]' ), `[` , 1))),
-                    category = sapply(strsplit(rownames(.), '[_]' ), `[` , 2)) %>%
-      dplyr::group_by(time, category) %>%
-      summarise_at(vars(value), list(val = mean, se = ~sd(.)/sqrt(n()),
-                                     t_crit = function(x) qt(0.975, df=length(x)-1))) %>%
-      ungroup() %>%
-      dplyr::mutate(lb = val-t_crit*se, ub = val+t_crit*se)
+                    category = sapply(strsplit(rownames(.), '[_]' ), `[` , 2))
     # if a single time point was provided, check for significance
     if(length(time) == 1 &
-       (max(plot_data$lb[1], plot_data$lb[2]) > min(plot_data$ub[1], plot_data$ub[2]))){
+       (t.test(value ~ category, data = plot_data)$p.value < 0.05)){
       sig_diff_bins <- append(sig_diff_bins, i)
     }
+    plot_data <- plot_data %>%
+      dplyr::group_by(time, category) %>%
+      summarise_at(vars(value), list(val = ~mean(., na.rm = TRUE), se = ~sd(., na.rm = TRUE)/sqrt(length(na.omit(.))))) %>%
+      ungroup()
     p <- ggplot(plot_data, aes(x=factor(time), y=val, fill=category)) +
       geom_col(position="dodge") +
       geom_errorbar(aes(ymin=pmax(0,val-se), ymax=pmin(val+se,100)), width=0.5,
                     position=position_dodge(0.9), linewidth=0.8) +
       labs(title=ifelse(plotTitle == "Bin", data$Bin[i], data$Compound[i]),
            x = "Time", y = axisTitle) +
-      ylim(min(0, plot_data$val-plot_data$se), 1.1*max(plot_data$val+plot_data$se))
+      ylim(0, 1.1*max(plot_data$val+plot_data$se, na.rm = TRUE))
     plot_list <- append(plot_list, list(p))
   }
   allPlots <- marrangeGrob(plot_list, nrow = 3, ncol = 3)
