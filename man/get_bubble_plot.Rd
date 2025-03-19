@@ -4,7 +4,12 @@
 \alias{get_bubble_plot}
 \title{Plot pool sizes along with label enrichment over time}
 \usage{
-get_bubble_plot(forBubblePlot, labeling_table, plotTitle = "Bin")
+get_bubble_plot(
+  forBubblePlot,
+  labeling_table,
+  plotTitle = "Bin",
+  labelLegend = "Enrichment (\%)"
+)
 }
 \arguments{
 \item{forBubblePlot}{object (1) data object for bubble plots, created using \link{get_table_objects_NA_corrected} function}
@@ -12,6 +17,8 @@ get_bubble_plot(forBubblePlot, labeling_table, plotTitle = "Bin")
 \item{labeling_table, }{object (1) label enrichment information, created using \link{get_table_objects_NA_corrected} function}
 
 \item{plotTitle}{string (1) title to be used for bubble plots i.e. "Bin" or "Compound" column}
+
+\item{labelLegend}{string (1) legend title to be used for labeling information. For average labeling, it could be "Enrichment (%)", for mol equivalents values, it could be "Enrichment (mol equivalents)"}
 }
 \value{
 The function returns a list that contains all figures generated and saves a pdf file to the current directory.
@@ -22,7 +29,7 @@ at each time, then visualize pool sizes with label incorporation at the same tim
 }
 \examples{
 \donttest{try(bubble_plots <- get_bubble_plot(test_13C15NGlutamine$forBubblePlot,
-test_13C15NGlutamine$average_labelingNAcorrected, plotTitle = "Compound"))}
+test_13C15NGlutamine$average_labelingNAcorrected, plotTitle = "Compound", labelLegend = "Enrichment (\%)"))}
 }
 \seealso{
 \link{get_table_objects_NA_corrected}, \link{label_enrichment_plot}

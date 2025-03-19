@@ -6,18 +6,21 @@
 #' @param forBubblePlot object (1) data object for bubble plots, created using \link{get_table_objects_NA_corrected} function
 #' @param labeling_table, object (1) label enrichment information, created using \link{get_table_objects_NA_corrected} function
 #' @param plotTitle string (1) title to be used for bubble plots i.e. "Bin" or "Compound" column
+#' @param labelLegend string (1) legend title to be used for labeling information. For average labeling, it could be "Enrichment (%)", for mol equivalents values, it could be "Enrichment (mol equivalents)"
 #'
 #' @seealso \link{get_table_objects_NA_corrected}, \link{label_enrichment_plot}
 #'
 #' @return The function returns a list that contains all figures generated and saves a pdf file to the current directory.
 #'
+#' @importFrom tidyr pivot_longer
+#'
 #' @export
 #'
 #' @examples
 #' \donttest{try(bubble_plots <- get_bubble_plot(test_13C15NGlutamine$forBubblePlot,
-#' test_13C15NGlutamine$average_labelingNAcorrected, plotTitle = "Compound"))}
+#' test_13C15NGlutamine$average_labelingNAcorrected, plotTitle = "Compound", labelLegend = "Enrichment (%)"))}
 
-get_bubble_plot <- function(forBubblePlot, labeling_table, plotTitle = "Bin"){
+get_bubble_plot <- function(forBubblePlot, labeling_table, plotTitle = "Bin", labelLegend = "Enrichment (%)"){
   if(plotTitle == "Compound"){
     if(! "Compound" %in% colnames(forBubblePlot)){
       stop("Compound column is not present in the data, choose Bin as the plot title")
@@ -84,7 +87,7 @@ get_bubble_plot <- function(forBubblePlot, labeling_table, plotTitle = "Bin"){
            x = "Time",
            y = "Category",
            size = "Pool Size",
-           fill = "Enrichment (%)") +
+           fill = labelLegend) +
       theme(legend.position = "bottom",
             legend.box = "vertical")
   })

@@ -33,14 +33,25 @@ barplots_comparison <- function(data, time = "default", axisTitle = "% Labeling"
   time_cols <- data_cols[times %in% time] # pull out columns with selected time points
   plot_list <- list()
   sig_diff_bins <- c()
+  multi_comparison <- c()
   for (i in 1:nrow(data)){
     plot_data <- data.frame(value=unlist(data[i, time_cols])) %>%
       dplyr::mutate(time = as.numeric(sub(".","",sapply(strsplit(rownames(.), '[_]' ), `[` , 1))),
                     category = sapply(strsplit(rownames(.), '[_]' ), `[` , 2))
     # if a single time point was provided, check for significance
-    if(length(time) == 1 &
-       (t.test(value ~ category, data = plot_data)$p.value < 0.05)){
-      sig_diff_bins <- append(sig_diff_bins, i)
+    if(length(time) == 1){
+      if(length(unique(plot_data$category)) == 2){ # if there are 2 categories, perform a t-test
+        if(t.test(value ~ category, data = plot_data)$p.value < 0.05){
+          sig_diff_bins <- append(sig_diff_bins, i)
+        }
+      }else{ # for more than 2 categories, do ANOVA with Tukey's
+        anova_res <- aov(value ~ category, data = plot_data)
+        sig_diff_cat <- paste0(names(which(TukeyHSD(anova_res)$category[,4] < 0.05)), collapse = ", ")
+        if(sig_diff_cat != ""){ # if difference exists
+          sig_diff_bins <- append(sig_diff_bins, i)
+          multi_comparison <- append(multi_comparison, sig_diff_cat)
+        }
+      }
     }
     plot_data <- plot_data %>%
       dplyr::group_by(time, category) %>%
@@ -60,8 +71,14 @@ barplots_comparison <- function(data, time = "default", axisTitle = "% Labeling"
   if(length(time)==1){
     if(plotTitle == "Bin"){
       sig_bins_df <- data[sig_diff_bins, c("Bin", "mz", "rt")]
+      if(length(unique(plot_data$category)) > 2){
+        sig_bins_df <- cbind(sig_bins_df, data.frame(Sig_Diff_Category = multi_comparison))
+      }
     }else{
       sig_bins_df <- data[sig_diff_bins, c("Bin", "Compound", "mz", "rt")]
+      if(length(unique(plot_data$category)) > 2){
+        sig_bins_df <- cbind(sig_bins_df, data.frame(Sig_Diff_Category = multi_comparison))
+      }
     }
     write.csv(sig_bins_df, "labeling_barplots_sig_bins.csv", row.names = FALSE)
     return(list(allplots = plot_list, sig_bins = sig_bins_df))
