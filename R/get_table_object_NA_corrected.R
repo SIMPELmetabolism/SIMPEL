@@ -144,9 +144,12 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
       match_ind <- which(XCMS_data$rt <= r_time+rt_tolerance & XCMS_data$rt >= r_time-rt_tolerance &
                          XCMS_data$mz <= comp_lookup_table[[iso_ind]]$ub & XCMS_data$mz >= comp_lookup_table[[iso_ind]]$lb &
                          is.na(XCMS_data$comp_result) & XCMS_data$polarity == polarity)
-      match_exist <- ifelse(length(match_ind) > 0, 
+      match_exist <- ifelse(length(match_ind) > 0,
                             ifelse(!is.na(match_ind), TRUE, FALSE),
                             FALSE)
+      if(!match_exist & iso_ind == 1){ # if M0 is not found, go to the next compound
+        break
+      }
       if(match_exist){
         # if multiple matches take the one with the closest m/z
         match_ind <- match_ind[which.min(abs(XCMS_data$mz[match_ind] - comp_lookup_table[[iso_ind]]$wc))]
@@ -154,11 +157,11 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
         XCMS_data[match_ind, "carbon"] <- comp_lookup_table[[iso_ind]]$carbon
         XCMS_data[match_ind, "nitrogen"] <- comp_lookup_table[[iso_ind]]$nitrogen
         XCMS_data[match_ind, "hydrogen"] <- comp_lookup_table[[iso_ind]]$hydrogen
-        
-        isotopeNumbers = comp_lookup_table[[iso_ind]]$carbon + 
-          comp_lookup_table[[iso_ind]]$nitrogen + 
+
+        isotopeNumbers = comp_lookup_table[[iso_ind]]$carbon +
+          comp_lookup_table[[iso_ind]]$nitrogen +
           comp_lookup_table[[iso_ind]]$hydrogen
-        
+
         XCMS_data[match_ind, "total_isotopes"] <- isotopeNumbers
         XCMS_data[match_ind, "Bin"] <- myBin
         XCMS_data[match_ind, "Compound"] <- myCompound
@@ -230,8 +233,8 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     dplyr::filter(total_isotopes == 0) %>%
     dplyr::select(all_of(data_cols), Bin) %>%
     reshape2::melt(measure.vars = data_cols, variable.name = "sample") %>%
-    dplyr::mutate(sample = as.character(sample), 
-                  time = as.numeric(sub(".","",sapply(strsplit(sample, '[_]' ), `[` , 1))), 
+    dplyr::mutate(sample = as.character(sample),
+                  time = as.numeric(sub(".","",sapply(strsplit(sample, '[_]' ), `[` , 1))),
                   category = sapply(strsplit(sample, '[_]' ), `[` , 2)) %>%
     dplyr::group_by(Bin, time, category) %>%
     summarise_at(vars(value), list(se = ~sd(., na.rm = TRUE)/sqrt(length(na.omit(.))), t_crit = function(x) qt(0.975, df = length(na.omit(x))-1))) %>%
@@ -241,7 +244,7 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     dplyr::summarise(clean = sum(se > 7.5, na.rm = TRUE) < 2)
   clean_bins = lapply(unique(clean_subset$category), function(category) clean_subset$Bin[clean_subset$category==category & clean_subset$clean])
   names(clean_bins) = unique(clean_subset$category)
-  clean_objects = unlist(lapply(unique(clean_subset$category), function(x) 
+  clean_objects = unlist(lapply(unique(clean_subset$category), function(x)
                   return(list(MIDs_table[MIDs_table$Bin %in% clean_bins[[x]],],
                          MIDs_tableScaled[MIDs_tableScaled$Bin %in% clean_bins[[x]],],
                          average_labeling[average_labeling$Bin %in% clean_bins[[x]],],
@@ -249,9 +252,16 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
   combs = expand.grid(c("MIDs_table_clean_", "MIDs_tableScaled_clean_", "average_labeling_clean_", "label_enrichment_clean_"), unique(clean_subset$category))
   names(clean_objects) = paste0(combs$Var1, combs$Var2)
 
-  # object for bubble plot to visualize pool sizes across time                              
-  forBubblePlot <- XCMS_data
-                                
+  # object for bubble plot to visualize pool sizes across time
+  forBubblePlot_avgLabel <- XCMS_data
+  forBubblePlot_molEqui <- XCMS_data %>%
+    dplyr::group_by(Bin) %>%
+    left_join(. , dplyr::select(compounds_data, c('prefix', contains('poolsize'))), by=join_by(Bin==prefix)) %>%
+    dplyr::mutate(across(contains(paste0(categories[1], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[1]))))) %>%
+    dplyr::mutate(across(contains(paste0(categories[2], "_")), ~.*eval(parse(text=paste0("poolsize_", categories[2]))))) %>%
+    dplyr::select(-contains('poolsize')) %>%
+    as.data.frame()
+
 
   if (!is.null(output))
   {
@@ -262,7 +272,8 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     lapply(names(clean_objects), function(name) {
       write.csv(clean_objects[[name]], paste0("get_table_objects/", name, ".csv"), row.names = FALSE)
     })
-    write.csv(forBubblePlot, file = file.path("./get_table_objects", paste(output, "forBubblePlot.csv", sep = "_")), row.names = FALSE)
+    write.csv(forBubblePlot_avgLabel, file = file.path("./get_table_objects", paste(output, "forBubblePlot_avgLabel.csv", sep = "_")), row.names = FALSE)
+    write.csv(forBubblePlot_molEqui, file = file.path("./get_table_objects", paste(output, "forBubblePlot_molEqui.csv", sep = "_")), row.names = FALSE)
   }
 
 
@@ -332,11 +343,11 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
   MIDs_tableNAcorrected = MIDs_tableNAcorrected[!MIDs_tableNAcorrected$Bin %in% vecOfNoMIDs,]
   scaledMIDsTableNAcorrected = scaledMIDsTableNAcorrected[!scaledMIDsTableNAcorrected$Bin %in% vecOfNoMIDs,]
   average_labelingNAcorrected = average_labelingNAcorrected[!average_labelingNAcorrected$Bin %in% vecOfNoMIDs,]
-  labelEnrichmentMIDsNAcorrected = labelEnrichmentMIDsNAcorrected[!labelEnrichmentMIDsNAcorrected$Bin %in% vecOfNoMIDs,] 
+  labelEnrichmentMIDsNAcorrected = labelEnrichmentMIDsNAcorrected[!labelEnrichmentMIDsNAcorrected$Bin %in% vecOfNoMIDs,]
 
 
   # subset by clean bins
-  clean_objects_NAcorrected = unlist(lapply(unique(clean_subset$category), function(x) 
+  clean_objects_NAcorrected = unlist(lapply(unique(clean_subset$category), function(x)
     return(list(MIDs_tableNAcorrected[MIDs_tableNAcorrected$Bin %in% clean_bins[[x]],],
                 scaledMIDsTableNAcorrected[scaledMIDsTableNAcorrected$Bin %in% clean_bins[[x]],],
                 average_labelingNAcorrected[average_labelingNAcorrected$Bin %in% clean_bins[[x]],],
@@ -361,6 +372,7 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
                     average_labeling = average_labeling, mol_equivalent_labeling = label_enrichment,
                     MIDS_Corrected = MIDs_tableNAcorrected, scaledMIDsCorrected = scaledMIDsTableNAcorrected,
                     averageLabeling_corrected = average_labelingNAcorrected, molEquivalent_corrected = labelEnrichmentMIDsNAcorrected,
-                    forBubblePlot = forBubblePlot)
+                    forBubblePlot_avgLabel = forBubblePlot_avgLabel,
+                    forBubblePlot_molEqui = forBubblePlot_molEqui)
   listReturn = c(listReturn, clean_objects, clean_objects_NAcorrected)
 }

@@ -17,7 +17,7 @@
 #' @export
 #'
 #' @examples
-#' \donttest{try(bubble_plots <- get_bubble_plot(test_13C15NGlutamine$forBubblePlot,
+#' \donttest{try(bubble_plots <- get_bubble_plot(test_13C15NGlutamine$forBubblePlot_avgLabel,
 #' test_13C15NGlutamine$average_labelingNAcorrected, plotTitle = "Compound", labelLegend = "Enrichment (%)"))}
 
 get_bubble_plot <- function(forBubblePlot, labeling_table, plotTitle = "Bin", labelLegend = "Enrichment (%)"){

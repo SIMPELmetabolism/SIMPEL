@@ -28,7 +28,7 @@ This function takes summation of intensities of each compound as a representatio
 at each time, then visualize pool sizes with label incorporation at the same time.
 }
 \examples{
-\donttest{try(bubble_plots <- get_bubble_plot(test_13C15NGlutamine$forBubblePlot,
+\donttest{try(bubble_plots <- get_bubble_plot(test_13C15NGlutamine$forBubblePlot_avgLabel,
 test_13C15NGlutamine$average_labelingNAcorrected, plotTitle = "Compound", labelLegend = "Enrichment (\%)"))}
 }
 \seealso{
