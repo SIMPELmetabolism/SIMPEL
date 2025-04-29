@@ -180,18 +180,25 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
 
   #run a master function to get the MIDs table, the averages table and also the list of
   #bins with incomplete sets of MIDs
-  listOfAllOutputs = MIDsTableNoScale(MIDs_table, label_scheme)#, XCMS_data)
+  listOfAllOutputs = MIDsTableNoScale(MIDs_table, label_scheme)
 
   #This is going to get us the 1st object of the list which will be the unscaled MIDs table
   MIDs_table = listOfAllOutputs[[1]]
+  # For bins that only have M0, impute missing values by 100 for MIDs table
+  which_unlabeled <- names(which(table(MIDs_table$Bin)==1))
+  MIDs_table <- MIDs_table %>%
+    dplyr::mutate(across(matches("_.+_"), ~ifelse(Bin %in% which_unlabeled, 100, .)))
   if(nchar(MIDs_table$Isotopologue[1]) < 4){ # if single-labeled, use M0,M1,...
     MIDs_table$Isotopologue = paste0('M', MIDs_table$total_isotopes)
   }
   #This is going to get us the second object of the list, which will be the averages table
   average_labeling = listOfAllOutputs[[2]]
+  # For bins that only have M0, impute missing values by 0 for average labeling table
+  average_labeling <- average_labeling %>%
+    dplyr::mutate(across(matches("_.+_"), ~ifelse(Bin %in% which_unlabeled, 0, .)))
   #This is going to get us the third object of the list, which will be any of the MIDs without
   #sufficient species present
-  vecOfNoMIDs = listOfAllOutputs[[3]]
+  #vecOfNoMIDs = listOfAllOutputs[[3]]
 
 
   #scale the MIDs table
@@ -219,14 +226,13 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
               by=join_by(Bin)) %>%
     as.data.frame()
 
+  # Put bins that only have M0 back to label enrichment table
+  label_enrichment <- rbind(label_enrichment, 
+                            average_labeling %>%
+                              dplyr::filter(Bin %in% which_unlabeled) %>%
+                              dplyr::mutate(across(matches("_.+_"), ~0)))
 
-  #remove bins that have no M0s
-  MIDs_table = MIDs_table[!MIDs_table$Bin %in% vecOfNoMIDs,]
-  MIDs_tableScaled = MIDs_tableScaled[!MIDs_tableScaled$Bin %in% vecOfNoMIDs,]
-  average_labeling = average_labeling[!average_labeling$Bin %in% vecOfNoMIDs,]
-  label_enrichment = label_enrichment[!label_enrichment$Bin %in% vecOfNoMIDs,]
-
-
+  
   # To get subsets of clean bins (bins with small se)
   data_cols = colnames(MIDs_table)[colnames(MIDs_table) %like% "_.+_"]
   clean_subset = MIDs_table %>%
@@ -280,13 +286,13 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
 
   #NA correct the MIDs now!
   # leave compounds that only have unlabeled isotopologues out of the correction process
-  which_unlabeled = names(which(table(MIDs_table$Bin)==1))
   if(length(which_unlabeled) > 0){ # if there are such compounds
     MIDs_unlabeled = MIDs_table[MIDs_table$Bin %in% which_unlabeled,]
     MIDs_for_correction = MIDs_table[!MIDs_table$Bin %in% which_unlabeled,]
     # also extract same info for other tables
     MIDs_tableScaled_unlabeled = MIDs_tableScaled[MIDs_tableScaled$Bin %in% which_unlabeled,]
     average_labeling_unlabeled = average_labeling[average_labeling$Bin %in% which_unlabeled,]
+    label_enrichment_unlabeled = label_enrichment[label_enrichment$Bin %in% which_unlabeled,]
   }else{
     MIDs_for_correction = MIDs_table
   }
@@ -302,9 +308,8 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     MIDs_tableNAcorrected$Isotopologue = paste0('M', MIDs_tableNAcorrected$total_isotopes)
   }
   average_labelingNAcorrected = subset(listOfAllOutputsNAcorrected[[2]], select=c(-Isotopologue))
-  vecOfNoMIDsNAcorrected = listOfAllOutputsNAcorrected[[3]]
 
-
+                                
   #scale the MIDs table by pool sizes
   scaledMIDsTableNAcorrected = MIDs_tableNAcorrected %>%
     dplyr::group_by(Bin) %>%
@@ -336,16 +341,10 @@ get_table_objects_NA_corrected <- function(XCMS_data, compounds_data, ppm=10, rt
     scaledMIDsTableNAcorrected = rbind(scaledMIDsTableNAcorrected, MIDs_tableScaled_unlabeled)
     average_labeling_unlabeled$CompoundPlaceholder = average_labeling_unlabeled$Bin
     average_labelingNAcorrected = rbind(average_labelingNAcorrected, average_labeling_unlabeled)
+    labelEnrichmentMIDsNAcorrected <- rbind(labelEnrichmentMIDsNAcorrected, label_enrichment_unlabeled)
   }
 
-
-  #remove bins that have no M0s
-  MIDs_tableNAcorrected = MIDs_tableNAcorrected[!MIDs_tableNAcorrected$Bin %in% vecOfNoMIDs,]
-  scaledMIDsTableNAcorrected = scaledMIDsTableNAcorrected[!scaledMIDsTableNAcorrected$Bin %in% vecOfNoMIDs,]
-  average_labelingNAcorrected = average_labelingNAcorrected[!average_labelingNAcorrected$Bin %in% vecOfNoMIDs,]
-  labelEnrichmentMIDsNAcorrected = labelEnrichmentMIDsNAcorrected[!labelEnrichmentMIDsNAcorrected$Bin %in% vecOfNoMIDs,]
-
-
+                                
   # subset by clean bins
   clean_objects_NAcorrected = unlist(lapply(unique(clean_subset$category), function(x)
     return(list(MIDs_tableNAcorrected[MIDs_tableNAcorrected$Bin %in% clean_bins[[x]],],
