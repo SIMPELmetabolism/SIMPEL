@@ -59,7 +59,7 @@ barplots_comparison <- function(data, time = "default", axisTitle = "% Labeling"
       ungroup()
     p <- ggplot(plot_data, aes(x=factor(time), y=val, fill=category)) +
       geom_col(position="dodge") +
-      geom_errorbar(aes(ymin=pmax(0,val-se), ymax=pmin(val+se,100)), width=0.5,
+      geom_errorbar(aes(ymin=pmax(0,val-se), ymax=val+se), width=0.5,
                     position=position_dodge(0.9), linewidth=0.8) +
       labs(title=ifelse(plotTitle == "Bin", data$Bin[i], data$Compound[i]),
            x = "Time", y = axisTitle) +
