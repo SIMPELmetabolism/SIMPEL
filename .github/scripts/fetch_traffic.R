@@ -1,0 +1,59 @@
+# .github/scripts/fetch_traffic.R
+library(httr)
+library(jsonlite)
+
+# Repo + token (injected by GitHub Actions)
+owner <- Sys.getenv("GITHUB_OWNER")
+repo  <- Sys.getenv("GITHUB_REPO")
+token <- Sys.getenv("GH_PAT")
+
+headers <- add_headers(Authorization = paste("token", token))
+
+# --- Helper function to fetch traffic ---
+fetch_traffic <- function(url) {
+  res <- content(GET(url, headers), as = "parsed", type = "application/json")
+  list(
+    totals = data.frame(
+      metric     = basename(url),  # clones or views
+      total      = res$count,
+      uniques    = res$uniques,
+      fetched_at = Sys.Date()
+    ),
+    daily = as.data.frame(res[[basename(url)]])  # clones or views
+  )
+}
+
+# --- API URLs ---
+url_clones <- paste0("https://api.github.com/repos/", owner, "/", repo, "/traffic/clones")
+url_views  <- paste0("https://api.github.com/repos/", owner, "/", repo, "/traffic/views")
+
+# --- Fetch both metrics ---
+clones <- fetch_traffic(url_clones)
+views  <- fetch_traffic(url_views)
+
+# --- Save directory ---
+dir.create("traffic_logs", showWarnings = FALSE)
+
+# --- Append helper ---
+append_or_write <- function(df, file) {
+  if (file.exists(file)) {
+    old <- read.csv(file)
+    new <- rbind(old, df)
+    # remove exact duplicates (in case of overlap)
+    new <- unique(new)
+    write.csv(new, file, row.names = FALSE)
+  } else {
+    write.csv(df, file, row.names = FALSE)
+  }
+}
+
+# --- Save daily stats ---
+clones$daily$fetched_at <- Sys.Date()
+views$daily$fetched_at  <- Sys.Date()
+
+append_or_write(clones$daily, "traffic_logs/clones_daily.csv")
+append_or_write(views$daily,  "traffic_logs/views_daily.csv")
+
+# --- Save totals ---
+append_or_write(rbind(clones$totals, views$totals),
+                "traffic_logs/traffic_totals.csv")
