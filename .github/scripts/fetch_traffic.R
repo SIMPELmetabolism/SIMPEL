@@ -61,8 +61,11 @@ dir.create("traffic_logs", showWarnings = FALSE)
 
 # --- Append helper ---
 append_or_write <- function(df, file) {
+  # Ensure fetched_at is character
+  if ("fetched_at" %in% colnames(df)) df$fetched_at <- as.character(df$fetched_at)
+  
   if (file.exists(file)) {
-    old <- read.csv(file)
+    old <- read.csv(file, stringsAsFactors = FALSE)
     new <- rbind(old, df)
     # remove exact duplicates (in case of overlap)
     new <- unique(new)
