@@ -12,15 +12,28 @@ headers <- add_headers(Authorization = paste("token", token))
 # --- Helper function to fetch traffic ---
 fetch_traffic <- function(url) {
   res <- content(GET(url, headers), as = "parsed", type = "application/json")
-  list(
-    totals = data.frame(
-      metric     = basename(url),  # clones or views
-      total      = res$count,
-      uniques    = res$uniques,
-      fetched_at = Sys.Date()
-    ),
-    daily = as.data.frame(res[[basename(url)]])  # clones or views
+
+  # Daily data: if empty, create empty data frame with proper columns
+  daily <- if (!is.null(res[[basename(url)]])) {
+    df <- as.data.frame(res[[basename(url)]])
+    df$fetched_at <- Sys.Date()
+    df
+  } else {
+    data.frame(timestamp=character(),
+               count=integer(),
+               uniques=integer(),
+               fetched_at=as.Date(character()))
+  }
+  
+  # Totals: always create 1-row data frame
+  totals <- data.frame(
+    metric     = basename(url),
+    total      = ifelse(is.null(res$count), 0, res$count),
+    uniques    = ifelse(is.null(res$uniques), 0, res$uniques),
+    fetched_at = Sys.Date()
   )
+  
+  list(totals = totals, daily = daily)
 }
 
 # --- API URLs ---
@@ -48,9 +61,6 @@ append_or_write <- function(df, file) {
 }
 
 # --- Save daily stats ---
-clones$daily$fetched_at <- Sys.Date()
-views$daily$fetched_at  <- Sys.Date()
-
 append_or_write(clones$daily, "traffic_logs/clones_daily.csv")
 append_or_write(views$daily,  "traffic_logs/views_daily.csv")
 
