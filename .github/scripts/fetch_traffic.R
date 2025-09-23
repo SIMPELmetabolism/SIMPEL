@@ -52,6 +52,15 @@ fetch_traffic <- function(url) {
 url_clones <- paste0("https://api.github.com/repos/", owner, "/", repo, "/traffic/clones")
 url_views  <- paste0("https://api.github.com/repos/", owner, "/", repo, "/traffic/views")
 
+# Debug
+cat("Owner:", owner, "\n")
+cat("Repo:", repo, "\n")
+cat("Clones URL:", url_clones, "\n")
+res <- GET(url_clones, headers)
+cat("HTTP status:", status_code(res), "\n")
+print(content(res, as = "parsed"))
+
+
 # --- Fetch both metrics ---
 clones <- fetch_traffic(url_clones)
 views  <- fetch_traffic(url_views)
