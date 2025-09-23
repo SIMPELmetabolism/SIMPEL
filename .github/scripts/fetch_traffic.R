@@ -12,17 +12,28 @@ headers <- add_headers(Authorization = paste("token", token))
 # --- Helper function to fetch traffic ---
 fetch_traffic <- function(url) {
   res <- content(GET(url, headers), as = "parsed", type = "application/json")
-
-  # Daily data: if empty, create empty data frame with proper columns
-  daily <- if (!is.null(res[[basename(url)]])) {
-    df <- as.data.frame(res[[basename(url)]])
-    df$fetched_at <- Sys.Date()
-    df
+  
+  # Get the daily list (clones or views)
+  daily_list <- res[[basename(url)]]
+  
+  # Daily data: convert list to proper data.frame
+  if (!is.null(daily_list) && length(daily_list) > 0) {
+    daily <- do.call(rbind, lapply(daily_list, function(x) {
+      data.frame(
+        timestamp = x$timestamp,
+        count     = x$count,
+        uniques   = x$uniques,
+        stringsAsFactors = FALSE
+      )
+    }))
+    daily$fetched_at <- Sys.Date()
   } else {
-    data.frame(timestamp=character(),
-               count=integer(),
-               uniques=integer(),
-               fetched_at=as.Date(character()))
+    daily <- data.frame(
+      timestamp = character(),
+      count     = integer(),
+      uniques   = integer(),
+      fetched_at = as.Date(character())
+    )
   }
   
   # Totals: always create 1-row data frame
@@ -30,7 +41,8 @@ fetch_traffic <- function(url) {
     metric     = basename(url),
     total      = ifelse(is.null(res$count), 0, res$count),
     uniques    = ifelse(is.null(res$uniques), 0, res$uniques),
-    fetched_at = Sys.Date()
+    fetched_at = Sys.Date(),
+    stringsAsFactors = FALSE
   )
   
   list(totals = totals, daily = daily)
