@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_OWNER: ${{ github.repository_owner }}
-      GITHUB_REPO:  ${{ github.event.repository.name }}
+      GITHUB_REPO:  ${{ github.repository }}
       GH_PAT: ${{ secrets.GH_PAT }}
     steps:
       - name: Checkout repo
