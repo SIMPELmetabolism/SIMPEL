@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_OWNER: ${{ github.repository_owner }}
-      GITHUB_REPO:  ${{ github.repository }}
+      GITHUB_REPO:  ${{ github.event.repository.name }}
       GH_PAT: ${{ secrets.GH_PAT }}
     steps:
       - name: Checkout repo
@@ -28,9 +28,6 @@ jobs:
 
       - name: Install R packages
         run: Rscript -e 'install.packages(c("httr","jsonlite"))'
-
-      - name: Debug GH_PAT
-        run: Rscript -e 'cat("GH_PAT:", nchar(Sys.getenv("GH_PAT")), "\n")'
 
       - name: Run traffic script
         run: Rscript .github/scripts/fetch_traffic.R
